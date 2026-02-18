@@ -287,7 +287,7 @@
                             </div>
                             <div className="text-sm bg-white/10 px-3 py-1 rounded-full flex items-center space-x-2">
                                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                                <span>v1.0.2</span>
+                                <span>v1.0.3</span>
                             </div>
                         </div>
                     </header>
@@ -444,14 +444,14 @@
                                                 {extractedData.recommendation.name}
                                             </h2>
                                             
-                                            <div className="h-56 bg-white rounded-lg mb-6 flex items-center justify-center relative overflow-hidden group border border-slate-200">
-                                                <div className="absolute inset-0 bg-slate-50 opacity-10 pattern-grid-lg"></div>
+                                            <div className="h-56 bg-white rounded-xl mb-6 flex items-center justify-center relative overflow-hidden group border-2 border-[#009999]">
+                                                {/* Removed grid pattern */}
                                                 
                                                 {extractedData.recommendation.imageKey === 'eco' && (
                                                     <img 
-                                                        src="images/A32-eco.jpg" 
+                                                        src="images/A32-eco.png" 
                                                         alt="ALPHA 3200 eco" 
-                                                        className="h-full w-full object-contain relative z-10 p-2"
+                                                        className="h-full w-full object-contain p-4 relative z-10"
                                                         onError={(e) => {
                                                             e.target.style.display = 'none';
                                                             const fallback = e.target.nextSibling;
@@ -469,7 +469,7 @@
                                                     <img 
                                                         src="images/A32-classic.png" 
                                                         alt="ALPHA 3200 classic" 
-                                                        className="h-full w-full object-contain relative z-10 p-2" 
+                                                        className="h-full w-full object-contain p-4 relative z-10" 
                                                         onError={(e) => {
                                                             e.target.style.display = 'none';
                                                             const fallback = e.target.nextSibling;
@@ -486,9 +486,9 @@
 
                                                 {extractedData.recommendation.imageKey === 's8' && (
                                                     <img 
-                                                        src="images/S8.jpeg" 
+                                                        src="images/S8.png" 
                                                         alt="SIVACON S8" 
-                                                        className="h-full w-full object-contain relative z-10 p-2" 
+                                                        className="h-full w-full object-contain p-4 relative z-10" 
                                                         onError={(e) => {
                                                             e.target.style.display = 'none';
                                                             const fallback = e.target.nextSibling;
@@ -504,7 +504,7 @@
                                                     </div>
                                                 )}
                                                 
-                                                <span className="absolute bottom-2 right-2 text-[10px] text-slate-500 font-mono z-20 bg-white/80 px-1 rounded">SIEMENS AG</span>
+                                                {/* Removed SIEMENS AG text */}
                                             </div>
 
                                             <div className="space-y-3">
