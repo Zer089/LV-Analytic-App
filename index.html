@@ -403,13 +403,67 @@
                                                 {extractedData.recommendation.name}
                                             </h2>
                                             
-                                            <div className="h-32 bg-slate-200 rounded-lg mb-6 flex items-center justify-center relative overflow-hidden group">
-                                                <div className="absolute inset-0 bg-slate-800 opacity-10 pattern-grid-lg"></div>
-                                                {extractedData.recommendation.imageKey === 'eco' && <Icons.Box className="w-16 h-16 text-slate-400" />}
-                                                {extractedData.recommendation.imageKey === 'classic' && <div className="flex space-x-1"><Icons.Box className="w-16 h-16 text-slate-500" /><Icons.Box className="w-16 h-16 text-slate-500" /></div>}
-                                                {extractedData.recommendation.imageKey === 's8' && <div className="flex items-end space-x-0.5"><div className="w-8 h-20 bg-slate-400 rounded-sm"></div><div className="w-8 h-20 bg-slate-400 rounded-sm"></div><div className="w-8 h-20 bg-slate-400 rounded-sm"></div></div>}
+                                            <div className="h-56 bg-white rounded-lg mb-6 flex items-center justify-center relative overflow-hidden group border border-slate-200">
+                                                <div className="absolute inset-0 bg-slate-50 opacity-10 pattern-grid-lg"></div>
                                                 
-                                                <span className="absolute bottom-2 right-2 text-[10px] text-slate-500 font-mono">SIEMENS AG</span>
+                                                {extractedData.recommendation.imageKey === 'eco' && (
+                                                    <img 
+                                                        src="images/A32-eco.jpg" 
+                                                        alt="ALPHA 3200 eco" 
+                                                        className="h-full w-full object-contain relative z-10 p-2"
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            const fallback = e.target.nextSibling;
+                                                            if (fallback) fallback.style.display = 'block';
+                                                        }}
+                                                    />
+                                                )}
+                                                {extractedData.recommendation.imageKey === 'eco' && (
+                                                    <div className="hidden absolute inset-0 flex items-center justify-center">
+                                                        <Icons.Box className="w-16 h-16 text-slate-400" />
+                                                    </div>
+                                                )}
+
+                                                {extractedData.recommendation.imageKey === 'classic' && (
+                                                    <img 
+                                                        src="images/A32-classic.png" 
+                                                        alt="ALPHA 3200 classic" 
+                                                        className="h-full w-full object-contain relative z-10 p-2" 
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            const fallback = e.target.nextSibling;
+                                                            if (fallback) fallback.style.display = 'flex';
+                                                        }}
+                                                    />
+                                                )}
+                                                {extractedData.recommendation.imageKey === 'classic' && (
+                                                    <div className="hidden absolute inset-0 flex items-center justify-center space-x-1">
+                                                        <Icons.Box className="w-16 h-16 text-slate-500" />
+                                                        <Icons.Box className="w-16 h-16 text-slate-500" />
+                                                    </div>
+                                                )}
+
+                                                {extractedData.recommendation.imageKey === 's8' && (
+                                                    <img 
+                                                        src="images/S8.jpeg" 
+                                                        alt="SIVACON S8" 
+                                                        className="h-full w-full object-contain relative z-10 p-2" 
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            const fallback = e.target.nextSibling;
+                                                            if (fallback) fallback.style.display = 'flex';
+                                                        }}
+                                                    />
+                                                )}
+                                                {extractedData.recommendation.imageKey === 's8' && (
+                                                    <div className="hidden absolute inset-0 flex items-end justify-center space-x-0.5 pb-8">
+                                                        <div className="w-8 h-20 bg-slate-400 rounded-sm"></div>
+                                                        <div className="w-8 h-20 bg-slate-400 rounded-sm"></div>
+                                                        <div className="w-8 h-20 bg-slate-400 rounded-sm"></div>
+                                                    </div>
+                                                )}
+                                                
+                                                <span className="absolute bottom-2 right-2 text-[10px] text-slate-500 font-mono z-20 bg-white/80 px-1 rounded">SIEMENS AG</span>
                                             </div>
 
                                             <div className="space-y-3">
