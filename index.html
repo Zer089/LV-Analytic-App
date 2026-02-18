@@ -3,26 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Siemens NSHV Configurator AI</title>
+    <title>Siemens LV Analytic App</title>
     
-    <!-- 1. Tailwind CSS (für das Styling ohne Build-Step) -->
+    <!-- 1. Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 2. React & ReactDOM (Core Libraries) -->
+    <!-- 2. React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
-    <!-- 3. Babel (damit wir JSX im Browser schreiben können) -->
+    <!-- 3. Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- 4. PDF.js (für das PDF Parsing) -->
+    <!-- 4. PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
-        // Setze Worker Source direkt
         window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     </script>
 
-    <!-- Custom Styles für Animationen -->
     <style>
         @keyframes loading {
             0% { transform: translateX(-100%); }
@@ -36,7 +34,6 @@
             background-image: linear-gradient(currentColor 1px, transparent 1px), linear-gradient(to right, currentColor 1px, transparent 1px);
             background-size: 20px 20px;
         }
-        /* Modal Animation */
         .modal-enter { opacity: 0; transform: scale(0.95); }
         .modal-enter-active { opacity: 1; transform: scale(1); transition: all 200ms ease-out; }
     </style>
@@ -47,7 +44,7 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- ICONS (Inline SVG Components to avoid dependency issues) ---
+        // --- ICONS ---
         const Icon = ({ path, className }) => (
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
                 {path}
@@ -66,7 +63,7 @@
             X: (props) => <Icon {...props} path={<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>} />
         };
 
-        // --- MAIN APP COMPONENT ---
+        // --- MAIN APP ---
 
         function App() {
             const [activeTab, setActiveTab] = useState('upload');
@@ -246,9 +243,8 @@
             // --- Configuration / Edit Logic ---
 
             const openConfig = () => {
-                // Kopie der aktuellen Daten erstellen für das Formular
                 setTempSpecs({ ...extractedData.specs });
-                setManualSystem('auto'); // Reset auf Auto
+                setManualSystem('auto'); 
                 setShowConfig(true);
             };
 
@@ -256,10 +252,8 @@
                 let newRecommendation;
                 
                 if (manualSystem === 'auto') {
-                    // Logik neu ausführen
                     newRecommendation = determineSystem(tempSpecs);
                 } else {
-                    // Manuelles System erzwingen
                     const systems = {
                         'eco': { name: 'ALPHA 3200 eco', imageKey: 'eco', reason: ['Manuell vom Benutzer ausgewählt'] },
                         'classic': { name: 'ALPHA 3200 classic', imageKey: 'classic', reason: ['Manuell vom Benutzer ausgewählt'] },
@@ -281,13 +275,16 @@
                     <header className="bg-[#009999] text-white shadow-lg sticky top-0 z-50">
                         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
                             <div className="flex items-center space-x-3">
-                                <div className="bg-white text-[#009999] p-2 rounded-sm font-bold text-xl tracking-tight">SIEMENS</div>
-                                <div className="h-6 w-px bg-white/30"></div>
-                                <h1 className="text-lg font-medium tracking-wide">LV Analyser & Configurator AI</h1>
+                                <div className="bg-white text-[#009999] p-2 rounded-sm font-bold text-xl tracking-tight self-start">SIEMENS</div>
+                                <div className="h-10 w-px bg-white/30 self-center"></div>
+                                <div className="flex flex-col justify-center">
+                                    <h1 className="text-lg font-medium tracking-wide leading-tight">LV Analytic App</h1>
+                                    <span className="text-xs text-green-50/80 font-light tracking-wide mt-0.5">KI-Tool zur Projektierungsunterstützung von NSHVs</span>
+                                </div>
                             </div>
                             <div className="text-sm bg-white/10 px-3 py-1 rounded-full flex items-center space-x-2">
                                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                                <span>v1.0.3</span>
+                                <span>v1.0.4</span>
                             </div>
                         </div>
                     </header>
@@ -444,14 +441,12 @@
                                                 {extractedData.recommendation.name}
                                             </h2>
                                             
-                                            <div className="h-56 bg-white rounded-xl mb-6 flex items-center justify-center relative overflow-hidden group border-2 border-[#009999]">
-                                                {/* Removed grid pattern */}
-                                                
+                                            <div className="h-56 bg-white rounded-xl mb-6 flex items-center justify-center relative overflow-hidden border-2 border-[#009999]">
                                                 {extractedData.recommendation.imageKey === 'eco' && (
                                                     <img 
                                                         src="images/A32-eco.png" 
                                                         alt="ALPHA 3200 eco" 
-                                                        className="h-full w-full object-contain p-4 relative z-10"
+                                                        className="w-full h-full object-cover rounded-lg"
                                                         onError={(e) => {
                                                             e.target.style.display = 'none';
                                                             const fallback = e.target.nextSibling;
@@ -469,7 +464,7 @@
                                                     <img 
                                                         src="images/A32-classic.png" 
                                                         alt="ALPHA 3200 classic" 
-                                                        className="h-full w-full object-contain p-4 relative z-10" 
+                                                        className="w-full h-full object-cover rounded-lg"
                                                         onError={(e) => {
                                                             e.target.style.display = 'none';
                                                             const fallback = e.target.nextSibling;
@@ -488,7 +483,7 @@
                                                     <img 
                                                         src="images/S8.png" 
                                                         alt="SIVACON S8" 
-                                                        className="h-full w-full object-contain p-4 relative z-10" 
+                                                        className="w-full h-full object-cover rounded-lg"
                                                         onError={(e) => {
                                                             e.target.style.display = 'none';
                                                             const fallback = e.target.nextSibling;
@@ -503,8 +498,6 @@
                                                         <div className="w-8 h-20 bg-slate-400 rounded-sm"></div>
                                                     </div>
                                                 )}
-                                                
-                                                {/* Removed SIEMENS AG text */}
                                             </div>
 
                                             <div className="space-y-3">
@@ -633,11 +626,8 @@
                                     </button>
                                 </div>
                                 <div className="p-6 overflow-y-auto space-y-6">
-                                    
-                                    {/* Section 1: Technische Daten */}
                                     <div className="space-y-4">
                                         <h4 className="text-sm uppercase tracking-wide text-slate-500 font-bold border-b pb-2">Technische Anforderungen</h4>
-                                        
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-xs font-semibold text-slate-600 mb-1">Bemessungsstrom (A)</label>
@@ -681,7 +671,6 @@
                                                 </select>
                                             </div>
                                         </div>
-                                        
                                         <div className="flex items-center space-x-2 pt-2">
                                             <input 
                                                 type="checkbox" 
@@ -694,7 +683,6 @@
                                         </div>
                                     </div>
 
-                                    {/* Section 2: Systemwahl */}
                                     <div className="space-y-4">
                                         <h4 className="text-sm uppercase tracking-wide text-slate-500 font-bold border-b pb-2">Systemauswahl</h4>
                                         <div>
@@ -714,7 +702,6 @@
                                             </p>
                                         </div>
                                     </div>
-
                                 </div>
                                 <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end space-x-3">
                                     <button 
@@ -738,7 +725,7 @@
                         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
                             <div className="mb-4 md:mb-0">
                                 <span className="font-bold text-white tracking-wider">SIEMENS</span> 
-                                <span className="ml-2 text-sm">NSHV Configurator AI Prototype (Portable)</span>
+                                <span className="ml-2 text-sm">LV Analytic App (Portable)</span>
                             </div>
                             <div className="text-xs">
                                 &copy; {new Date().getFullYear()} Siemens AG. Interne Nutzung.
