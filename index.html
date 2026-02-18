@@ -60,7 +60,8 @@
             ArrowRight: (props) => <Icon {...props} path={<><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></>} />,
             Search: (props) => <Icon {...props} path={<><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></>} />,
             Settings: (props) => <Icon {...props} path={<><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></>} />,
-            X: (props) => <Icon {...props} path={<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>} />
+            X: (props) => <Icon {...props} path={<><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>} />,
+            Table: (props) => <Icon {...props} path={<><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="3" y1="15" x2="21" y2="15" /><line x1="9" y1="9" x2="9" y2="21" /></>} />
         };
 
         // --- MAIN APP ---
@@ -85,7 +86,7 @@
                     voltage: /(?:Bemessungsspannung|Un|Nennspannung)[\s:.]*([0-9]+)\s*V/i,
                     icw: /(?:Bemessungskurzzeitstrom|Icw|Kurzschlussfestigkeit)[\s:.]*([0-9.,]+)\s*kA/i,
                     ip: /(?:Schutzart|IP)(?:\s*[:]\s*|\s+)(IP\s*[0-9]{2})/i,
-                    form: /(?:Form|Bauform)[\s:.]*(2b|3b|4a|4b)/i,
+                    form: /(?:Form|Bauform)[\s:.]*(1|2b|3b|4a|4b)/i,
                     arcFault: /(?:Störlichtbogen|Lichtbogenschutz|Personenschutz|Arc)/i,
                 };
 
@@ -104,6 +105,11 @@
                     let val = parseFloat(currentMatch[1].replace(',', '.'));
                     if (val < 10) val = val * 1000;
                     specs.current = val;
+                }
+                
+                const voltageMatch = text.match(patterns.voltage);
+                if (voltageMatch) {
+                     specs.voltage = parseInt(voltageMatch[1]);
                 }
 
                 const icwMatch = text.match(patterns.icw);
@@ -134,30 +140,43 @@
                 let system = '';
                 let imageKey = '';
 
-                const isEcoPossible = specs.current <= 1250 && specs.icw <= 30 && !specs.arcFault && (specs.form === 'Unbekannt' || specs.form === 'Form 2b');
+                // LOGIC UPDATE V1.0.5 based on new Technical Data
+                // SIVACON S8: In > 3200A, Icw > 75kA, Ue > 400V, Form 4, ArcFault
+                // Classic: Form 2b/3b, In <= 3200A
+                // Eco: Form 1, Ue <= 400V, In <= 3200A
 
-                if (isEcoPossible) {
-                    system = 'ALPHA 3200 eco';
-                    imageKey = 'eco';
-                    reason.push('Bemessungsstrom ≤ 1250 A');
-                    reason.push('Standard Kurzschlussfestigkeit ausreichend');
-                    reason.push('Kosteneffiziente Lösung für einfache Anwendungen');
+                // 1. Check Hard Limits for SIVACON S8
+                const needsS8 = specs.current > 3200 || 
+                                specs.icw > 75 || 
+                                specs.arcFault || 
+                                specs.form.includes('4') || 
+                                specs.voltage > 400;
+
+                if (needsS8) {
+                    system = 'SIVACON S8';
+                    imageKey = 's8';
+                    if (specs.current > 3200) reason.push(`Stromstärke (${specs.current} A) erfordert S8 (> 3200 A)`);
+                    if (specs.icw > 75) reason.push(`Kurzschlussfestigkeit (${specs.icw} kA) erfordert S8 (> 75 kA)`);
+                    if (specs.arcFault) reason.push('Aktiver Störlichtbogenschutz erfordert S8');
+                    if (specs.form.includes('4')) reason.push(`Innere Unterteilung ${specs.form} erfordert S8`);
+                    if (specs.voltage > 400) reason.push(`Spannung ${specs.voltage}V erfordert S8 (> 400V)`);
                 } else {
-                    const isClassicPossible = specs.current <= 3200 && specs.icw <= 65 && !specs.arcFault;
-
-                    if (isClassicPossible) {
+                    // 2. Decide between Eco and Classic
+                    // Classic needed if Form > 1 (e.g. 2b, 3b)
+                    const needsClassic = specs.form.includes('2') || specs.form.includes('3'); 
+                    
+                    if (needsClassic) {
                         system = 'ALPHA 3200 classic';
                         imageKey = 'classic';
-                        if (specs.current > 1250) reason.push(`Stromstärke (${specs.current} A) übersteigt Eco-Limit`);
-                        if (specs.icw > 30) reason.push(`Kurzschlussfestigkeit (${specs.icw} kA) erfordert robustes System`);
-                        reason.push('Modularer Aufbau für mittlere Leistungsbereiche');
+                        reason.push(`Innere Unterteilung ${specs.form} erfordert Classic (Form 2b)`);
+                        reason.push('Modularer Aufbau für mittlere Anforderungen');
                     } else {
-                        system = 'SIVACON S8';
-                        imageKey = 's8';
-                        if (specs.current > 3200) reason.push(`Hochstromanwendung (${specs.current} A)`);
-                        if (specs.icw > 65) reason.push(`Hohe Kurzschlussfestigkeit (${specs.icw} kA) gefordert`);
-                        if (specs.arcFault) reason.push('Aktiver/Passiver Störlichtbogenschutz erkannt');
-                        if (specs.form.includes('4')) reason.push(`Hohe Formunterteilung (${specs.form}) erforderlich`);
+                        // 3. Fallback to Eco if Form 1 is okay or unknown
+                        system = 'ALPHA 3200 eco';
+                        imageKey = 'eco';
+                        reason.push(`Stromstärke (${specs.current} A) innerhalb Eco-Bereich (≤ 3200 A)`);
+                        reason.push('Keine höhere innere Unterteilung gefordert (Form 1)');
+                        reason.push('Kosteneffiziente Lösung');
                     }
                 }
 
@@ -284,7 +303,7 @@
                             </div>
                             <div className="text-sm bg-white/10 px-3 py-1 rounded-full flex items-center space-x-2">
                                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                                <span>v1.0.4</span>
+                                <span>v1.0.5</span>
                             </div>
                         </div>
                     </header>
@@ -545,43 +564,69 @@
                                 
                                 <div className="prose max-w-none text-slate-600">
                                     <p>
-                                        Basierend auf dem eingelesenen Leistungsverzeichnis (LV) wurde eine automatische Selektion der passenden
-                                        Niederspannungshauptverteilung vorgenommen. Das Tool folgt dabei der Siemens-internen Logik zur
-                                        Kosten-Nutzen-Optimierung.
+                                        Die KI-basierte Auswahl erfolgt anhand eines detaillierten Vergleichs der technischen Limits der Siemens NSHV-Systeme.
                                     </p>
                                     
-                                    <h3 className="text-lg font-bold text-slate-800 mt-6 mb-3">Auswahl-Logik (Kaskade)</h3>
-                                    <div className="flex items-center space-x-4 mb-8">
-                                        <div className={`flex-1 p-4 rounded border ${extractedData.recommendation.imageKey === 'eco' ? 'border-[#009999] bg-teal-50 ring-2 ring-[#009999] ring-opacity-50' : 'border-slate-200 bg-slate-50 opacity-50'}`}>
-                                            <div className="font-bold mb-1">1. ALPHA 3200 eco</div>
-                                            <div className="text-xs">
-                                                I<sub>n</sub> ≤ 1250A. Einfache Anwendungen.
-                                            </div>
-                                        </div>
-                                        <Icons.ArrowRight className="text-slate-300" />
-                                        <div className={`flex-1 p-4 rounded border ${extractedData.recommendation.imageKey === 'classic' ? 'border-[#009999] bg-teal-50 ring-2 ring-[#009999] ring-opacity-50' : 'border-slate-200 bg-slate-50 opacity-50'}`}>
-                                            <div className="font-bold mb-1">2. ALPHA 3200 classic</div>
-                                            <div className="text-xs">
-                                                I<sub>n</sub> ≤ 3200A. Hohe Modularität.
-                                            </div>
-                                        </div>
-                                        <Icons.ArrowRight className="text-slate-300" />
-                                        <div className={`flex-1 p-4 rounded border ${extractedData.recommendation.imageKey === 's8' ? 'border-[#009999] bg-teal-50 ring-2 ring-[#009999] ring-opacity-50' : 'border-slate-200 bg-slate-50 opacity-50'}`}>
-                                            <div className="font-bold mb-1">3. SIVACON S8</div>
-                                            <div className="text-xs">
-                                                Bis 7000A. Höchste Personensicherheit (Störlichtbogen).
-                                            </div>
-                                        </div>
+                                    <h3 className="text-lg font-bold text-slate-800 mt-6 mb-3">System-Vergleichstabelle (v1.0.5)</h3>
+                                    <div className="overflow-x-auto border border-slate-200 rounded-lg mb-8">
+                                        <table className="w-full text-sm text-left">
+                                            <thead className="bg-slate-100 text-slate-700 uppercase font-semibold text-xs">
+                                                <tr>
+                                                    <th className="px-4 py-3">Basisdaten</th>
+                                                    <th className={`px-4 py-3 ${extractedData.recommendation.imageKey === 's8' ? 'bg-[#009999]/10 text-[#009999]' : ''}`}>SIVACON S8</th>
+                                                    <th className={`px-4 py-3 ${extractedData.recommendation.imageKey === 'classic' ? 'bg-[#009999]/10 text-[#009999]' : ''}`}>ALPHA 3200 classic</th>
+                                                    <th className={`px-4 py-3 ${extractedData.recommendation.imageKey === 'eco' ? 'bg-[#009999]/10 text-[#009999]' : ''}`}>ALPHA 3200 Eco</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-200">
+                                                <tr>
+                                                    <td className="px-4 py-2 font-medium">Bemessungsstrom (In)</td>
+                                                    <td className="px-4 py-2">bis 7010 A</td>
+                                                    <td className="px-4 py-2">bis 3200 A</td>
+                                                    <td className="px-4 py-2">bis 3200 A</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="px-4 py-2 font-medium">Kurzschluss (Icw, 1s)</td>
+                                                    <td className="px-4 py-2">150 kA</td>
+                                                    <td className="px-4 py-2">75 kA</td>
+                                                    <td className="px-4 py-2">75 kA</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="px-4 py-2 font-medium">Stoßkurzschluss (Ipk)</td>
+                                                    <td className="px-4 py-2">330 kA</td>
+                                                    <td className="px-4 py-2">165 kA</td>
+                                                    <td className="px-4 py-2">165 kA</td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="px-4 py-2 font-medium">Innere Unterteilung</td>
+                                                    <td className="px-4 py-2">Form 4b</td>
+                                                    <td className="px-4 py-2">Form 2b</td>
+                                                    <td className="px-4 py-2">Form 1</td>
+                                                </tr>
+                                                 <tr>
+                                                    <td className="px-4 py-2 font-medium">Schutzart</td>
+                                                    <td className="px-4 py-2">IP30 … IP54</td>
+                                                    <td className="px-4 py-2">IP40 / IP54</td>
+                                                    <td className="px-4 py-2">IP30 / IP54</td>
+                                                </tr>
+                                                 <tr>
+                                                    <td className="px-4 py-2 font-medium">Spannung (Ue)</td>
+                                                    <td className="px-4 py-2">690 V AC</td>
+                                                    <td className="px-4 py-2">690 V AC</td>
+                                                    <td className="px-4 py-2">400 V AC</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
 
-                                    <h3 className="text-lg font-bold text-slate-800 mt-6 mb-3">Erkannte Parameter</h3>
+                                    <h3 className="text-lg font-bold text-slate-800 mt-6 mb-3">Erkannte Parameter im LV</h3>
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-sm text-left">
                                             <thead className="bg-slate-100 text-slate-700 uppercase font-semibold">
                                                 <tr>
                                                     <th className="px-4 py-3">Parameter</th>
                                                     <th className="px-4 py-3">Wert</th>
-                                                    <th className="px-4 py-3">Auswirkung</th>
+                                                    <th className="px-4 py-3">Bewertung</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-200">
@@ -589,23 +634,39 @@
                                                     <td className="px-4 py-3 font-medium">Strom (I<sub>n</sub>)</td>
                                                     <td className="px-4 py-3">{extractedData.specs.current} A</td>
                                                     <td className="px-4 py-3">
-                                                        {extractedData.specs.current > 3200 ? 'Erzwingt SIVACON S8' : extractedData.specs.current > 1250 ? 'Erzwingt Classic/S8' : 'Ermöglicht Eco'}
+                                                        {extractedData.specs.current > 3200 ? 'Erfordert S8' : 'Möglich in Eco/Classic/S8'}
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td className="px-4 py-3 font-medium">Kurzschluss (I<sub>cw</sub>)</td>
                                                     <td className="px-4 py-3">{extractedData.specs.icw} kA</td>
                                                     <td className="px-4 py-3">
-                                                        {extractedData.specs.icw > 65 ? 'Hohe Festigkeit benötigt (S8)' : 'Standardbereich'}
+                                                        {extractedData.specs.icw > 75 ? 'Erfordert S8' : 'Standardbereich'}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="px-4 py-3 font-medium">Form</td>
+                                                    <td className="px-4 py-3">{extractedData.specs.form}</td>
+                                                    <td className="px-4 py-3">
+                                                        {extractedData.specs.form.includes('4') ? 'Erfordert S8' : extractedData.specs.form.includes('2') ? 'Erfordert Classic' : 'Eco möglich'}
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td className="px-4 py-3 font-medium">Störlichtbogen</td>
                                                     <td className="px-4 py-3">{extractedData.specs.arcFault ? 'Ja' : 'Nein'}</td>
                                                     <td className="px-4 py-3">
-                                                        {extractedData.specs.arcFault ? 'Kritisches Feature -> SIVACON S8' : '-'}
+                                                        {extractedData.specs.arcFault ? 'Sicherheitsfeature -> SIVACON S8' : '-'}
                                                     </td>
                                                 </tr>
+                                                {extractedData.specs.voltage > 400 && (
+                                                    <tr>
+                                                        <td className="px-4 py-3 font-medium">Spannung</td>
+                                                        <td className="px-4 py-3">{extractedData.specs.voltage} V</td>
+                                                        <td className="px-4 py-3">
+                                                            Erfordert S8/Classic (> 400V)
+                                                        </td>
+                                                    </tr>
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
@@ -664,9 +725,8 @@
                                                     onChange={(e) => setTempSpecs({...tempSpecs, form: 'Form ' + e.target.value})}
                                                 >
                                                     <option value="Unbekannt">Unbekannt</option>
+                                                    <option value="1">Form 1</option>
                                                     <option value="2b">Form 2b</option>
-                                                    <option value="3b">Form 3b</option>
-                                                    <option value="4a">Form 4a</option>
                                                     <option value="4b">Form 4b</option>
                                                 </select>
                                             </div>
