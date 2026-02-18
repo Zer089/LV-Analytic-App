@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siemens NSHV Configurator AI</title>
+    
+    <!-- 1. Tailwind CSS (für das Styling ohne Build-Step) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. React & ReactDOM (Core Libraries) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- 3. Babel (damit wir JSX im Browser schreiben können) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- 4. PDF.js (für das PDF Parsing) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Setze Worker Source direkt
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+
+    <!-- Custom Styles für Animationen -->
+    <style>
+        @keyframes loading {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(0); }
+            100% { transform: translateX(100%); }
+        }
+        .animate-loading {
+            animation: loading 1.5s ease-in-out infinite;
+        }
+        .pattern-grid-lg {
+            background-image: linear-gradient(currentColor 1px, transparent 1px), linear-gradient(to right, currentColor 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- ICONS (Inline SVG Components to avoid dependency issues) ---
+        const Icon = ({ path, className }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {path}
+            </svg>
+        );
+
+        const Icons = {
+            Upload: (props) => <Icon {...props} path={<><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></>} />,
+            FileText: (props) => <Icon {...props} path={<><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></>} />,
+            CheckCircle: (props) => <Icon {...props} path={<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>} />,
+            Cpu: (props) => <Icon {...props} path={<><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" x2="9" y1="1" y2="4"/><line x1="15" x2="15" y1="1" y2="4"/><line x1="9" x2="9" y1="20" y2="23"/><line x1="15" x2="15" y1="20" y2="23"/><line x1="20" x2="23" y1="9" y2="9"/><line x1="20" x2="23" y1="14" y2="14"/><line x1="1" x2="4" y1="9" y2="9"/><line x1="1" x2="4" y1="14" y2="14"/></>} />,
+            Box: (props) => <Icon {...props} path={<><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" x2="12" y1="22.08" y2="12"/></>} />,
+            ArrowRight: (props) => <Icon {...props} path={<><line x1="5" x2="19" y1="12" y2="12"/><polyline points="12 5 19 12 12 19"/></>} />,
+            Search: (props) => <Icon {...props} path={<><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></>} />,
+            Settings: (props) => <Icon {...props} path={<><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></>} />
+        };
+
+        // --- MAIN APP COMPONENT ---
+
+        function App() {
+            const [activeTab, setActiveTab] = useState('upload');
+            const [analyzing, setAnalyzing] = useState(false);
+            const [fileName, setFileName] = useState('');
+            const [extractedData, setExtractedData] = useState(null);
+            const [rawText, setRawText] = useState('');
+
+            // --- Logic Engine ---
+
+            const analyzeLV = (text) => {
+                const patterns = {
+                    current: /(?:Bemessungs(?:betriebs)?strom|In|Nennstrom)[\s:.]*([0-9.,]+)\s*[kA]?(?:\s*A)/i,
+                    voltage: /(?:Bemessungsspannung|Un|Nennspannung)[\s:.]*([0-9]+)\s*V/i,
+                    icw: /(?:Bemessungskurzzeitstrom|Icw|Kurzschlussfestigkeit)[\s:.]*([0-9.,]+)\s*kA/i,
+                    ip: /(?:Schutzart|IP)(?:\s*[:]\s*|\s+)(IP\s*[0-9]{2})/i,
+                    form: /(?:Form|Bauform)[\s:.]*(2b|3b|4a|4b)/i,
+                    arcFault: /(?:Störlichtbogen|Lichtbogenschutz|Personenschutz|Arc)/i,
+                };
+
+                const specs = {
+                    current: 0,
+                    voltage: 400,
+                    icw: 0,
+                    ip: 'IP30',
+                    form: 'Unbekannt',
+                    arcFault: false,
+                    positions: []
+                };
+
+                const currentMatch = text.match(patterns.current);
+                if (currentMatch) {
+                    let val = parseFloat(currentMatch[1].replace(',', '.'));
+                    if (val < 10) val = val * 1000;
+                    specs.current = val;
+                }
+
+                const icwMatch = text.match(patterns.icw);
+                if (icwMatch) {
+                    specs.icw = parseFloat(icwMatch[1].replace(',', '.'));
+                }
+
+                const ipMatch = text.match(patterns.ip);
+                if (ipMatch) specs.ip = ipMatch[1].replace(/\s/g, '');
+
+                const formMatch = text.match(patterns.form);
+                if (formMatch) specs.form = "Form " + formMatch[1];
+
+                if (patterns.arcFault.test(text)) specs.arcFault = true;
+
+                const lines = text.split('\n');
+                const relevantLines = lines.filter(line => 
+                    (line.includes('Schaltfeld') || line.includes('Leistungsschalter') || line.includes('Einspeisung') || line.includes('Abgang')) &&
+                    (line.match(/^\s*\d{2,}/) || line.includes('St.'))
+                ).slice(0, 15);
+                specs.positions = relevantLines;
+
+                return specs;
+            };
+
+            const determineSystem = (specs) => {
+                let reason = [];
+                let system = '';
+                let imageKey = '';
+
+                const isEcoPossible = specs.current <= 1250 && specs.icw <= 30 && !specs.arcFault && (specs.form === 'Unbekannt' || specs.form === 'Form 2b');
+
+                if (isEcoPossible) {
+                    system = 'ALPHA 3200 eco';
+                    imageKey = 'eco';
+                    reason.push('Bemessungsstrom ≤ 1250 A');
+                    reason.push('Standard Kurzschlussfestigkeit ausreichend');
+                    reason.push('Kosteneffiziente Lösung für einfache Anwendungen');
+                } else {
+                    const isClassicPossible = specs.current <= 3200 && specs.icw <= 65 && !specs.arcFault;
+
+                    if (isClassicPossible) {
+                        system = 'ALPHA 3200 classic';
+                        imageKey = 'classic';
+                        if (specs.current > 1250) reason.push(`Stromstärke (${specs.current} A) übersteigt Eco-Limit`);
+                        if (specs.icw > 30) reason.push(`Kurzschlussfestigkeit (${specs.icw} kA) erfordert robustes System`);
+                        reason.push('Modularer Aufbau für mittlere Leistungsbereiche');
+                    } else {
+                        system = 'SIVACON S8';
+                        imageKey = 's8';
+                        if (specs.current > 3200) reason.push(`Hochstromanwendung (${specs.current} A)`);
+                        if (specs.icw > 65) reason.push(`Hohe Kurzschlussfestigkeit (${specs.icw} kA) gefordert`);
+                        if (specs.arcFault) reason.push('Aktiver/Passiver Störlichtbogenschutz erkannt');
+                        if (specs.form.includes('4')) reason.push(`Hohe Formunterteilung (${specs.form}) erforderlich`);
+                    }
+                }
+
+                return { name: system, reason, imageKey };
+            };
+
+            const handleFileUpload = async (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                setAnalyzing(true);
+                setFileName(file.name);
+
+                try {
+                    let textContent = "";
+
+                    if (file.type === "application/pdf") {
+                        if (!window.pdfjsLib) {
+                            throw new Error("PDF Library lädt noch. Bitte Seite aktualisieren.");
+                        }
+                        
+                        const arrayBuffer = await file.arrayBuffer();
+                        const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                        
+                        let fullText = "";
+                        const maxPages = Math.min(pdf.numPages, 50);
+                        
+                        for (let i = 1; i <= maxPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const textContentObj = await page.getTextContent();
+                            const pageText = textContentObj.items.map((item) => item.str).join(" ");
+                            fullText += pageText + "\n";
+                        }
+                        textContent = fullText;
+
+                    } else {
+                        textContent = await file.text();
+                    }
+
+                    setRawText(textContent);
+                    processText(textContent);
+                } catch (error) {
+                    console.error(error);
+                    alert("Fehler beim Lesen der Datei: " + error.message);
+                    setAnalyzing(false);
+                }
+            };
+
+            const loadDemoData = () => {
+                setAnalyzing(true);
+                setFileName("Demo_LV_Kaufland_Bernau.pdf");
+                
+                setTimeout(() => {
+                    const demoText = `
+                        Leistungsverzeichnis
+                        Projekt: 1526/23 Kaufland Bernau
+                        Los 5 Elektrotechnik
+                        ...
+                        2.1 Niederspannungshauptverteilung (NSHV)
+                        Aufstellung: Innenraum, freistehend
+                        Schutzart: IP54
+                        Netzform: TN-C-S
+                        Bemessungsspannung: 400 V AC
+                        Bemessungsbetriebsstrom: 2500 A
+                        Kurzschlussfestigkeit Icw: 65 kA
+                        Innere Unterteilung: Form 4b
+                        Sammelschiene: Cu
+                    `;
+                    setRawText(demoText);
+                    processText(demoText);
+                }, 1500);
+            };
+
+            const processText = (text) => {
+                const specs = analyzeLV(text);
+                const recommendation = determineSystem(specs);
+                
+                setExtractedData({ specs, recommendation });
+                setAnalyzing(false);
+                setActiveTab('dashboard');
+            };
+
+            return (
+                <div className="min-h-screen bg-slate-50 text-slate-800 font-sans">
+                    {/* Header */}
+                    <header className="bg-[#009999] text-white shadow-lg sticky top-0 z-50">
+                        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+                            <div className="flex items-center space-x-3">
+                                <div className="bg-white text-[#009999] p-2 rounded-sm font-bold text-xl tracking-tight">SIEMENS</div>
+                                <div className="h-6 w-px bg-white/30"></div>
+                                <h1 className="text-lg font-medium tracking-wide">LV Analyser & Configurator AI</h1>
+                            </div>
+                            <div className="text-sm bg-white/10 px-3 py-1 rounded-full flex items-center space-x-2">
+                                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                                <span>Portable v1.0</span>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="max-w-7xl mx-auto px-4 py-8">
+                        
+                        {/* Navigation Tabs */}
+                        {extractedData && (
+                            <div className="flex space-x-4 mb-8 border-b border-slate-200">
+                                <button 
+                                    onClick={() => setActiveTab('upload')}
+                                    className={`pb-3 px-2 text-sm font-medium transition-colors ${activeTab === 'upload' ? 'border-b-2 border-[#009999] text-[#009999]' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    Datei Upload
+                                </button>
+                                <button 
+                                    onClick={() => setActiveTab('dashboard')}
+                                    className={`pb-3 px-2 text-sm font-medium transition-colors ${activeTab === 'dashboard' ? 'border-b-2 border-[#009999] text-[#009999]' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    Analyse Dashboard
+                                </button>
+                                <button 
+                                    onClick={() => setActiveTab('details')}
+                                    className={`pb-3 px-2 text-sm font-medium transition-colors ${activeTab === 'details' ? 'border-b-2 border-[#009999] text-[#009999]' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    Technische Details
+                                </button>
+                            </div>
+                        )}
+
+                        {/* View: Upload */}
+                        {activeTab === 'upload' && (
+                            <div className="max-w-2xl mx-auto mt-10">
+                                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
+                                    <div className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <Icons.Upload className="w-10 h-10 text-[#009999]" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-slate-800 mb-2">LV Analyse starten</h2>
+                                    <p className="text-slate-500 mb-8">
+                                        Laden Sie ein PDF oder eine GAEB-Datei hoch. Die KI extrahiert automatisch <br/>relevante Parameter für die NSHV-Auslegung.
+                                    </p>
+
+                                    {analyzing ? (
+                                        <div className="space-y-4">
+                                            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                                <div className="bg-[#009999] h-2 rounded-full animate-loading w-2/3"></div>
+                                            </div>
+                                            <p className="text-sm text-slate-500 animate-pulse">Analysiere "{fileName}"...</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <label className="block w-full cursor-pointer group">
+                                                <input type="file" className="hidden" accept=".pdf,.txt,.xml,.x83,.p83" onChange={handleFileUpload} />
+                                                <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 transition-colors group-hover:border-[#009999] group-hover:bg-teal-50/30">
+                                                    <span className="text-[#009999] font-medium group-hover:underline">Datei auswählen</span>
+                                                    <span className="text-slate-400"> oder hierher ziehen</span>
+                                                </div>
+                                            </label>
+                                            
+                                            <div className="relative flex py-2 items-center">
+                                                <div className="flex-grow border-t border-slate-200"></div>
+                                                <span className="flex-shrink-0 mx-4 text-slate-400 text-xs uppercase">Oder</span>
+                                                <div className="flex-grow border-t border-slate-200"></div>
+                                            </div>
+
+                                            <button 
+                                                onClick={loadDemoData}
+                                                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-lg transition-colors flex items-center justify-center"
+                                            >
+                                                <Icons.FileText className="w-4 h-4 mr-2" />
+                                                Demo-Daten laden (Kaufland Bernau)
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* View: Dashboard */}
+                        {activeTab === 'dashboard' && extractedData && (
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                
+                                <div className="lg:col-span-2 space-y-6">
+                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                                        <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center">
+                                            <Icons.Cpu className="w-5 h-5 text-[#009999] mr-2" />
+                                            Erkannte Anforderungen
+                                        </h3>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                                <div className="text-xs text-slate-500 uppercase font-semibold mb-1">Strom (In)</div>
+                                                <div className="text-2xl font-bold text-slate-800">{extractedData.specs.current} A</div>
+                                            </div>
+                                            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                                <div className="text-xs text-slate-500 uppercase font-semibold mb-1">Kurzschluss (Icw)</div>
+                                                <div className="text-2xl font-bold text-slate-800">{extractedData.specs.icw} kA</div>
+                                            </div>
+                                            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                                <div className="text-xs text-slate-500 uppercase font-semibold mb-1">Schutzart</div>
+                                                <div className="text-2xl font-bold text-slate-800">{extractedData.specs.ip}</div>
+                                            </div>
+                                            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                                <div className="text-xs text-slate-500 uppercase font-semibold mb-1">Innere Form</div>
+                                                <div className="text-xl font-bold text-slate-800 truncate" title={extractedData.specs.form}>{extractedData.specs.form}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                                            <h3 className="font-bold text-slate-800 flex items-center">
+                                                <Icons.Search className="w-4 h-4 mr-2 text-slate-500" />
+                                                Relevante Positionen
+                                            </h3>
+                                            <span className="text-xs bg-slate-200 text-slate-600 px-2 py-1 rounded">
+                                                {extractedData.specs.positions.length} gefunden
+                                            </span>
+                                        </div>
+                                        <div className="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+                                            {extractedData.specs.positions.length > 0 ? (
+                                                extractedData.specs.positions.map((line, idx) => (
+                                                    <div key={idx} className="px-6 py-3 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
+                                                        {line}
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="p-6 text-center text-slate-400 italic">
+                                                    Keine spezifischen LV-Positionen im Text erkannt.
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <details className="group">
+                                        <summary className="list-none flex items-center cursor-pointer text-sm text-[#009999] font-medium">
+                                            <Icons.ArrowRight className="w-4 h-4 mr-1 transition-transform group-open:rotate-90" />
+                                            Rohdaten anzeigen
+                                        </summary>
+                                        <div className="mt-2 bg-slate-900 text-slate-300 p-4 rounded-lg font-mono text-xs overflow-auto max-h-60">
+                                            {rawText.substring(0, 2000)}...
+                                        </div>
+                                    </details>
+                                </div>
+
+                                <div className="lg:col-span-1">
+                                    <div className="bg-white rounded-xl shadow-lg border-t-4 border-[#009999] overflow-hidden sticky top-24">
+                                        <div className="p-6 bg-gradient-to-br from-white to-teal-50">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-xs font-bold tracking-wider text-[#009999] uppercase">Empfohlenes System</span>
+                                                <Icons.CheckCircle className="w-6 h-6 text-green-500" />
+                                            </div>
+                                            <h2 className="text-3xl font-extrabold text-slate-800 mb-4 leading-tight">
+                                                {extractedData.recommendation.name}
+                                            </h2>
+                                            
+                                            <div className="h-32 bg-slate-200 rounded-lg mb-6 flex items-center justify-center relative overflow-hidden group">
+                                                <div className="absolute inset-0 bg-slate-800 opacity-10 pattern-grid-lg"></div>
+                                                {extractedData.recommendation.imageKey === 'eco' && <Icons.Box className="w-16 h-16 text-slate-400" />}
+                                                {extractedData.recommendation.imageKey === 'classic' && <div className="flex space-x-1"><Icons.Box className="w-16 h-16 text-slate-500" /><Icons.Box className="w-16 h-16 text-slate-500" /></div>}
+                                                {extractedData.recommendation.imageKey === 's8' && <div className="flex items-end space-x-0.5"><div className="w-8 h-20 bg-slate-400 rounded-sm"></div><div className="w-8 h-20 bg-slate-400 rounded-sm"></div><div className="w-8 h-20 bg-slate-400 rounded-sm"></div></div>}
+                                                
+                                                <span className="absolute bottom-2 right-2 text-[10px] text-slate-500 font-mono">SIEMENS AG</span>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                <h4 className="text-sm font-semibold text-slate-700">Entscheidungskriterien:</h4>
+                                                <ul className="space-y-2">
+                                                    {extractedData.recommendation.reason.map((r, i) => (
+                                                        <li key={i} className="flex items-start text-sm text-slate-600">
+                                                            <span className="mr-2 mt-1 text-[#009999]">•</span>
+                                                            {r}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="bg-slate-50 px-6 py-4 border-t border-slate-200">
+                                            <h4 className="text-xs font-semibold text-slate-500 uppercase mb-3">Alternative Optionen</h4>
+                                            <div className="space-y-2 opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition-all">
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className="font-medium">ALPHA 3200 eco</span>
+                                                    <span className="text-xs bg-slate-200 px-2 py-0.5 rounded">Low End</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className="font-medium">SIVACON S8</span>
+                                                    <span className="text-xs bg-slate-200 px-2 py-0.5 rounded">High End</span>
+                                                </div>
+                                            </div>
+                                            <button className="w-full mt-4 bg-[#009999] hover:bg-[#007a7a] text-white text-sm font-medium py-2 rounded shadow-sm transition-colors flex items-center justify-center">
+                                                <Icons.Settings className="w-4 h-4 mr-2" />
+                                                Konfiguration anpassen
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* View: Details */}
+                        {activeTab === 'details' && extractedData && (
+                            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8">
+                                <h2 className="text-2xl font-bold text-slate-800 mb-6">Technische Analyse & Begründung</h2>
+                                
+                                <div className="prose max-w-none text-slate-600">
+                                    <p>
+                                        Basierend auf dem eingelesenen Leistungsverzeichnis (LV) wurde eine automatische Selektion der passenden
+                                        Niederspannungshauptverteilung vorgenommen. Das Tool folgt dabei der Siemens-internen Logik zur
+                                        Kosten-Nutzen-Optimierung.
+                                    </p>
+                                    
+                                    <h3 className="text-lg font-bold text-slate-800 mt-6 mb-3">Auswahl-Logik (Kaskade)</h3>
+                                    <div className="flex items-center space-x-4 mb-8">
+                                        <div className={`flex-1 p-4 rounded border ${extractedData.recommendation.imageKey === 'eco' ? 'border-[#009999] bg-teal-50 ring-2 ring-[#009999] ring-opacity-50' : 'border-slate-200 bg-slate-50 opacity-50'}`}>
+                                            <div className="font-bold mb-1">1. ALPHA 3200 eco</div>
+                                            <div className="text-xs">
+                                                I<sub>n</sub> ≤ 1250A. Einfache Anwendungen.
+                                            </div>
+                                        </div>
+                                        <Icons.ArrowRight className="text-slate-300" />
+                                        <div className={`flex-1 p-4 rounded border ${extractedData.recommendation.imageKey === 'classic' ? 'border-[#009999] bg-teal-50 ring-2 ring-[#009999] ring-opacity-50' : 'border-slate-200 bg-slate-50 opacity-50'}`}>
+                                            <div className="font-bold mb-1">2. ALPHA 3200 classic</div>
+                                            <div className="text-xs">
+                                                I<sub>n</sub> ≤ 3200A. Hohe Modularität.
+                                            </div>
+                                        </div>
+                                        <Icons.ArrowRight className="text-slate-300" />
+                                        <div className={`flex-1 p-4 rounded border ${extractedData.recommendation.imageKey === 's8' ? 'border-[#009999] bg-teal-50 ring-2 ring-[#009999] ring-opacity-50' : 'border-slate-200 bg-slate-50 opacity-50'}`}>
+                                            <div className="font-bold mb-1">3. SIVACON S8</div>
+                                            <div className="text-xs">
+                                                Bis 7000A. Höchste Personensicherheit (Störlichtbogen).
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h3 className="text-lg font-bold text-slate-800 mt-6 mb-3">Erkannte Parameter</h3>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm text-left">
+                                            <thead className="bg-slate-100 text-slate-700 uppercase font-semibold">
+                                                <tr>
+                                                    <th className="px-4 py-3">Parameter</th>
+                                                    <th className="px-4 py-3">Wert</th>
+                                                    <th className="px-4 py-3">Auswirkung</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-200">
+                                                <tr>
+                                                    <td className="px-4 py-3 font-medium">Strom (I<sub>n</sub>)</td>
+                                                    <td className="px-4 py-3">{extractedData.specs.current} A</td>
+                                                    <td className="px-4 py-3">
+                                                        {extractedData.specs.current > 3200 ? 'Erzwingt SIVACON S8' : extractedData.specs.current > 1250 ? 'Erzwingt Classic/S8' : 'Ermöglicht Eco'}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="px-4 py-3 font-medium">Kurzschluss (I<sub>cw</sub>)</td>
+                                                    <td className="px-4 py-3">{extractedData.specs.icw} kA</td>
+                                                    <td className="px-4 py-3">
+                                                        {extractedData.specs.icw > 65 ? 'Hohe Festigkeit benötigt (S8)' : 'Standardbereich'}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="px-4 py-3 font-medium">Störlichtbogen</td>
+                                                    <td className="px-4 py-3">{extractedData.specs.arcFault ? 'Ja' : 'Nein'}</td>
+                                                    <td className="px-4 py-3">
+                                                        {extractedData.specs.arcFault ? 'Kritisches Feature -> SIVACON S8' : '-'}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    <footer className="bg-slate-800 text-slate-400 py-8 mt-12 border-t border-slate-700">
+                        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
+                            <div className="mb-4 md:mb-0">
+                                <span className="font-bold text-white tracking-wider">SIEMENS</span> 
+                                <span className="ml-2 text-sm">NSHV Configurator AI Prototype (Portable)</span>
+                            </div>
+                            <div className="text-xs">
+                                &copy; {new Date().getFullYear()} Siemens AG. Interne Nutzung.
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
