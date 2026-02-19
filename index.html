@@ -84,12 +84,12 @@
             const [tempSpecs, setTempSpecs] = useState(null);
             const [manualSystem, setManualSystem] = useState('auto');
 
-            // --- Logic Engine (v1.0.9) ---
+            // --- Logic Engine (v1.1.0) ---
 
             const analyzeLV = (text) => {
                 let contextText = text;
                 
-                // 1. Intelligentes NSHV Chunk-Scoring (vermeidet Inhaltsverzeichnis & Fremdgewerke wie Notlicht)
+                // 1. Intelligentes NSHV Chunk-Scoring (isoliert den NSHV-Abschnitt & ignoriert Vorheriges wie Notlicht)
                 const keywordRegex = /(?:Niederspannungshauptverteilung|NSHV)/gi;
                 let match;
                 let bestChunk = text;
@@ -97,18 +97,18 @@
                 
                 const chunks = [];
                 while ((match = keywordRegex.exec(text)) !== null) {
-                    // Erfasse 5000 Zeichen ab dem Trefferwort
-                    chunks.push(text.substring(match.index, match.index + 5000));
+                    // Erfasse 8000 Zeichen ab dem Trefferwort (deckt das gesamte NSHV-Gewerk ab)
+                    chunks.push(text.substring(match.index, match.index + 8000));
                 }
                 
                 if (chunks.length > 0) {
                     for (const chunk of chunks) {
                         let score = 0;
-                        if (/(?:Bemessungs(?:betriebs)?strom|In|Nennstrom|Dauernennstrom)/i.test(chunk)) score += 3;
-                        if (/(?:Bemessungskurzzeitstrom|Icw|Kurzschlussstrom)/i.test(chunk)) score += 3;
-                        if (/(?:Form|Bauform|Unterteilung)\s*(1|2a|2b|3a|3b|4a|4b)/i.test(chunk)) score += 3;
-                        if (/(?:Sammelschiene|Hauptleiter|Einspeisung)/i.test(chunk)) score += 2;
-                        if (/(?:IP\s*[0-9]{2})/i.test(chunk)) score += 1;
+                        if (/(?:Bemessungs(?:betriebs)?strom|\bIn\b|Nennstrom|Dauernennstrom)[\s\S]{0,120}?\b\d/i.test(chunk)) score += 3;
+                        if (/(?:Bemessungskurzzeitstrom|\bIcw\b|Kurzschlussfestigkeit|Kurzschlussstrom)[\s\S]{0,120}?\b\d/i.test(chunk)) score += 3;
+                        if (/(?:Form|Bauform|Unterteilung)[\s\S]{0,120}?\b(1|2a|2b|3a|3b|4a|4b)\b/i.test(chunk)) score += 3;
+                        if (/(?:Schutzart|Schutzgrad)[\s\S]{0,120}?\bIP/i.test(chunk)) score += 2;
+                        if (/(?:Sammelschiene|Hauptleiter|Einspeisung)/i.test(chunk)) score += 1;
                         
                         if (score > maxScore) {
                             maxScore = score;
@@ -120,21 +120,6 @@
                         contextText = bestChunk;
                     }
                 }
-
-                // 2. Robuste Regex (toleriert Füllwörter wie "bis" oder "=", ohne Ziffern dazwischen)
-                const patterns = {
-                    current: /(?:Bemessungs(?:betriebs)?strom|\bIn\b|Nennstrom|Dauernennstrom)[^\d]{0,50}?([0-9]{1,3}(?:\.[0-9]{3})*|[0-9]+)\s*A\b/i,
-                    voltage: /(?:Bemessungsspannung|Un|Nennspannung)[^\d]{0,50}?([0-9]{3})\s*V/i,
-                    icw: /(?:Bemessungskurzzeitstrom|Icw|Kurzschlussfestigkeit|Kurzschlussstrom)[^\d]{0,50}?([0-9.,]+)\s*kA/i,
-                    ip: /\bIP[\s\r\n-]*([0-9]{2})\b/i,
-                    form: /(?:Form|Bauform|Unterteilung)[^\d]{0,40}?(1|2a|2b|3a|3b|4a|4b)\b/i,
-                    arcFault: /(?:Störlichtbogen|Lichtbogenschutz|Personenschutz|Arc)/i,
-                    mcc: /(?:MCC|Motor Control Center)/i,
-                    einschub: /(?:Einschubtechnik|Einschub)/i,
-                    kompensation: /(?:Blindleistungskompensation|Kompensation)/i,
-                    nj63: /(?:3NJ63|Lasttrennschalter mit Sicherungen)/i,
-                    universal: /(?:Universaleinbautechnik)/i
-                };
 
                 const specs = {
                     current: 0,
@@ -151,36 +136,40 @@
                     positions: []
                 };
 
-                // Parsing Werte
-                const currentMatch = contextText.match(patterns.current);
+                // 2. Robuste Regex-Ausdrücke (tolerieren Füllwörter und unterschiedliche Tausendertrennzeichen wie 1.600 oder 1 600)
+                const currentPattern = /(?:Bemessungs(?:betriebs)?strom|\bIn\b|Nennstrom|Dauernennstrom)[\s\S]{0,120}?\b([0-9]{1,3}(?:[\s.][0-9]{3})+|[0-9]+(?:,[0-9]+)?)\s*A\b/i;
+                const currentMatch = contextText.match(currentPattern);
                 if (currentMatch) {
-                    // Berücksichtigt deutsche Tausendertrennzeichen "1.600" -> "1600"
-                    let valStr = currentMatch[1].replace(/\./g, '').replace(',', '.');
+                    let valStr = currentMatch[1].replace(/[\s.]/g, '').replace(',', '.');
                     specs.current = parseFloat(valStr);
                 }
                 
-                const voltageMatch = contextText.match(patterns.voltage);
+                const voltageMatch = contextText.match(/(?:Bemessungsspannung|Un|Nennspannung)[\s\S]{0,120}?\b([0-9]{3})\s*V\b/i);
                 if (voltageMatch) specs.voltage = parseInt(voltageMatch[1]);
 
-                const icwMatch = contextText.match(patterns.icw);
+                const icwMatch = contextText.match(/(?:Bemessungskurzzeitstrom|\bIcw\b|Kurzschlussfestigkeit|Kurzschlussstrom)[\s\S]{0,120}?\b([0-9]{1,3}(?:,[0-9]+)?|\.[0-9]+)\s*kA\b/i);
                 if (icwMatch) {
-                    let valStr = icwMatch[1].replace(/\./g, '').replace(',', '.');
+                    let valStr = icwMatch[1].replace(',', '.');
                     specs.icw = parseFloat(valStr);
                 }
 
-                const ipMatch = contextText.match(patterns.ip);
+                // IP-Schutzart (Sucht bevorzugt nach dem Begriff "Schutzart", sonst Fallback)
+                let ipMatch = contextText.match(/(?:Schutzart|Schutzgrad|Schutzklasse)[\s\S]{0,120}?\bIP[\s-]*([0-9]{2})\b/i);
+                if (!ipMatch) {
+                    ipMatch = contextText.match(/\bIP[\s-]*([0-9]{2})\b/i);
+                }
                 if (ipMatch) specs.ip = 'IP' + ipMatch[1];
 
-                const formMatch = contextText.match(patterns.form);
+                const formMatch = contextText.match(/(?:Form|Bauform|Unterteilung)[\s\S]{0,120}?\b(1|2a|2b|3a|3b|4a|4b)\b/i);
                 if (formMatch) specs.form = "Form " + formMatch[1];
 
                 // Booleans
-                if (patterns.arcFault.test(contextText)) specs.arcFault = true;
-                if (patterns.mcc.test(contextText)) specs.mcc = true;
-                if (patterns.einschub.test(contextText)) specs.einschub = true;
-                if (patterns.kompensation.test(contextText)) specs.kompensation = true;
-                if (patterns.nj63.test(contextText)) specs.nj63 = true;
-                if (patterns.universal.test(contextText)) specs.universal = true;
+                if (/(?:Störlichtbogen|Lichtbogenschutz|Personenschutz|Arc)/i.test(contextText)) specs.arcFault = true;
+                if (/(?:MCC|Motor Control Center)/i.test(contextText)) specs.mcc = true;
+                if (/(?:Einschubtechnik|Einschub)/i.test(contextText)) specs.einschub = true;
+                if (/(?:Blindleistungskompensation|Kompensation)/i.test(contextText)) specs.kompensation = true;
+                if (/(?:3NJ63|Lasttrennschalter mit Sicherungen)/i.test(contextText)) specs.nj63 = true;
+                if (/(?:Universaleinbautechnik)/i.test(contextText)) specs.universal = true;
 
                 // Positionen extrahieren
                 const lines = contextText.split('\n');
@@ -366,7 +355,7 @@
                             </div>
                             <div className="text-sm bg-white/10 px-3 py-1 rounded-full flex items-center space-x-2">
                                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                                <span>v1.0.9</span>
+                                <span>v1.1.0</span>
                             </div>
                         </div>
                     </header>
@@ -643,11 +632,11 @@
                                 
                                 <div className="prose max-w-none text-slate-600">
                                     <p>
-                                        Die KI-basierte Auswahl (v1.0.9) folgt der strikten Kaskade: <strong>Eco -> Classic -> SIVACON S8</strong>. 
+                                        Die KI-basierte Auswahl (v1.1.0) folgt der strikten Kaskade: <strong>Eco -> Classic -> SIVACON S8</strong>. 
                                         Sobald ein technisches Limit der niederen Stufe gerissen wird, rückt das nächsthöhere System nach.
                                     </p>
                                     
-                                    <h3 className="text-lg font-bold text-slate-800 mt-6 mb-3">System-Vergleichstabelle (v1.0.9)</h3>
+                                    <h3 className="text-lg font-bold text-slate-800 mt-6 mb-3">System-Vergleichstabelle (v1.1.0)</h3>
                                     <div className="overflow-x-auto border border-slate-200 rounded-lg mb-8">
                                         <table className="w-full text-sm text-left">
                                             <thead className="bg-slate-100 text-slate-700 uppercase font-semibold text-xs">
