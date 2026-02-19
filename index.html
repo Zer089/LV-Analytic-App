@@ -84,50 +84,40 @@
             const [tempSpecs, setTempSpecs] = useState(null);
             const [manualSystem, setManualSystem] = useState('auto');
 
-            // --- Logic Engine (v1.1.2) ---
+            // --- Logic Engine (v1.1.3) ---
 
-            const analyzeLV = (text) => {
-                let contextText = text;
+            const analyzeLV = (rawTextPDF) => {
+                // 1. Radikale PDF-Artefakt-Bereinigung: Verschmilzt Umbrüche zu einer Zeile für sauberes Regex
+                const cleanText = rawTextPDF.replace(/\s+/g, ' ');
                 
-                // 1. Sliding-Window Chunking (Isoliert garantiert das echte Gewerk)
-                const chunkSize = 4000;
-                const overlap = 2000;
-                const chunks = [];
+                // 2. Zielgerichtetes Chunking an NSHV-Signatur
+                const sections = cleanText.split(/(?=Niederspannungshauptverteilung|NSHV)/i);
                 
-                for (let i = 0; i < text.length; i += (chunkSize - overlap)) {
-                    chunks.push(text.substring(i, i + chunkSize));
-                }
-                
+                let bestSection = cleanText.substring(0, 5000);
                 let maxScore = -1000;
-                let bestChunk = text;
                 
-                for (const chunk of chunks) {
+                for (let sec of sections) {
+                    // Blockgröße limitieren, um das Reinrutschen anderer Gewerke zu verhindern
+                    let chunk = sec.substring(0, 6000);
                     let score = 0;
-                    const countMatches = (regex) => (chunk.match(regex) || []).length;
                     
-                    // Identifikation der Ziel-Anlage (+15)
-                    score += countMatches(/(?:Niederspannungshauptverteilung|NSHV|Niederspannungs[-\s]?hauptverteilung|Niederspannungs[-\s]?Schaltgerätekombination)/gi) * 15;
+                    // Todesstrafe für Inhaltsverzeichnis (TOC)
+                    if (/Inhaltsverzeichnis|Zusammenstellung|Index|Losübersicht/i.test(chunk)) score -= 100;
                     
-                    // Spezifikations-Vokabular (+3)
-                    score += countMatches(/(?:Sammelschiene|Kupfer|Hauptleiter|Tragerahmen|Einspeisung|Feld|Schaltschrank|Abgang)/gi) * 3;
-                    score += countMatches(/(?:Bemessungs|Nennstrom|Dauernennstrom|Kurzschluss|Icw|Ipk|Form|Bauform|IP\s*[0-9]{2})/gi) * 3;
+                    // Pluspunkte für echte Spezifikationsbegriffe im Block
+                    const kw = (regex) => (chunk.match(regex) || []).length;
+                    score += kw(/Sammelschiene|Hauptleiter|Tragerahmen|Einspeisung|Schaltschrank/gi) * 3;
+                    score += kw(/Bemessungsstrom|Kurzschlussstrom|Icw|Ipk|Nennstrom/gi) * 4;
+                    score += kw(/Schutzart IP/gi) * 2;
+                    score += kw(/Form \d/gi) * 2;
                     
-                    // Harte Bestrafung für Inhaltsverzeichnisse (-30)
-                    score -= countMatches(/(?:Inhaltsverzeichnis|Zusammenstellung|Index|Inhalt|Losübersicht)/gi) * 30;
-                    
-                    if (score > maxScore) {
+                    if (score > maxScore && score > 0) {
                         maxScore = score;
-                        bestChunk = chunk;
+                        bestSection = chunk;
                     }
                 }
 
-                // Erweitere das Fenster leicht, falls am Rand abgeschnitten wurde
-                if (maxScore > 10) {
-                    let startIdx = text.indexOf(bestChunk);
-                    let safeStart = Math.max(0, startIdx - 1000);
-                    let safeEnd = Math.min(text.length, startIdx + chunkSize + 2000);
-                    contextText = text.substring(safeStart, safeEnd);
-                }
+                const contextText = bestSection;
 
                 const specs = {
                     current: 0,
@@ -144,60 +134,77 @@
                     positions: []
                 };
 
-                // Aggressive Nummernbereinigung
-                const parseAmpere = (str) => parseInt(str.replace(/[^\d]/g, ''), 10) || 0;
-                const parseKa = (str) => parseFloat(str.replace(/\s/g, '').replace(',', '.')) || 0;
+                // Artefakt-sichere Zahlenumwandlung (für "1 . 6 0 0", "1.600", "1 600")
+                const parseGermanNum = (str) => {
+                    if (!str) return 0;
+                    let s = str.replace(/[^\d.,]/g, ''); // Behält nur Ziffern, Punkt, Komma
+                    if (s.includes('.') && s.includes(',')) {
+                        return parseFloat(s.replace(/\./g, '').replace(',', '.')); // 1.600,50 -> 1600.50
+                    } else if (s.includes(',')) {
+                        return parseFloat(s.replace(',', '.')); // 1600,50 -> 1600.50
+                    } else if (s.includes('.')) {
+                        // Check ob es Tausendertrenner ist (nach letztem Punkt genau 3 Ziffern)
+                        let parts = s.split('.');
+                        if (parts[parts.length - 1].length === 3) {
+                            return parseFloat(s.replace(/\./g, '')); // 1.600 -> 1600
+                        } else {
+                            return parseFloat(s); // 1.6 -> 1.6
+                        }
+                    }
+                    return parseFloat(s) || 0;
+                };
 
-                // 2. Omni-Max Strategie für Ströme (A)
-                const currentRegex = /(?:Bemessungs(?:betriebs)?strom|\bIn\b|Nennstrom|Dauernennstrom)[\s\S]{0,150}?(?:bis|=)?\s*([0-9]{1,3}(?:[.\s][0-9]{3})+|[0-9]+)\s*A(?!\w)/gi;
+                // 3. Ströme (A) - Sucht in allen Formaten, nimmt das Maximum der NSHV-Einspeisung
+                const currentRegex = /(?:Bemessungs(?:betriebs)?strom|\bIn\b|Nennstrom|Dauernennstrom).{0,80}?(?:bis|=)?\s*((?:\d[\s.,]*)+)\s*A\b/gi;
                 let currents = [];
-                let curMatch;
-                while ((curMatch = currentRegex.exec(contextText)) !== null) {
-                    let val = parseAmpere(curMatch[1]);
+                let match;
+                while ((match = currentRegex.exec(contextText)) !== null) {
+                    let val = parseGermanNum(match[1]);
                     if (val > 10 && val <= 10000) currents.push(val);
                 }
                 
-                // Fallback (Sucht jeden Ampere-Wert im Block, falls kein "Bemessungsstrom" davorsteht)
+                // Fallback (Falls Keyword fehlt)
                 if (currents.length === 0) {
-                    const anyAmpRegex = /\b([0-9]{1,3}(?:[.\s][0-9]{3})+|[0-9]{3,4})\s*A(?!\w)/gi;
-                    while ((curMatch = anyAmpRegex.exec(contextText)) !== null) {
-                         let val = parseAmpere(curMatch[1]);
+                    const anyAmpRegex = /\b((?:\d[\s.,]*)+)\s*A\b/gi;
+                    while ((match = anyAmpRegex.exec(contextText)) !== null) {
+                         let val = parseGermanNum(match[1]);
                          if (val >= 100 && val <= 10000) currents.push(val);
                     }
                 }
                 if (currents.length > 0) specs.current = Math.max(...currents);
 
-                // 3. Omni-Max Strategie für Kurzschluss (kA)
-                const icwRegex = /(?:Bemessungskurzzeitstrom|\bIcw\b|Kurzschlussfestigkeit|Kurzschlussstrom)[\s\S]{0,150}?(?:bis|=)?\s*([0-9]+(?:[.,][0-9]+)?)\s*kA(?!\w)/gi;
+                // 4. Kurzschluss (kA) - Sucht alle Icw-Werte
+                const icwRegex = /(?:Bemessungskurzzeitstrom|\bIcw\b|Kurzschlussfestigkeit|Kurzschlussstrom).{0,80}?(?:bis|=)?\s*((?:\d[\s.,]*)+)\s*kA\b/gi;
                 let icws = [];
-                let icwMatch;
-                while ((icwMatch = icwRegex.exec(contextText)) !== null) {
-                    icws.push(parseKa(icwMatch[1]));
+                while ((match = icwRegex.exec(contextText)) !== null) {
+                    let val = parseGermanNum(match[1]);
+                    if (val > 0 && val <= 300) icws.push(val);
                 }
                 if (icws.length === 0) {
-                     const anyKaRegex = /\b([0-9]+(?:[.,][0-9]+)?)\s*kA(?!\w)/gi;
-                     while ((icwMatch = anyKaRegex.exec(contextText)) !== null) {
-                         icws.push(parseKa(icwMatch[1]));
+                     const anyKaRegex = /\b((?:\d[\s.,]*)+)\s*kA\b/gi;
+                     while ((match = anyKaRegex.exec(contextText)) !== null) {
+                         let val = parseGermanNum(match[1]);
+                         if (val > 0 && val <= 300) icws.push(val);
                      }
                 }
                 if (icws.length > 0) specs.icw = Math.max(...icws);
 
-                // 4. Spannung (Ue)
-                const voltageMatch = contextText.match(/(?:Bemessungsspannung|Un|Nennspannung)[\s\S]{0,120}?\b([0-9]{3})\s*V\b/i);
-                if (voltageMatch) specs.voltage = parseInt(voltageMatch[1]);
+                // 5. Spannung (Ue)
+                let uMatch = contextText.match(/(?:Bemessungsspannung|Un|Nennspannung).{0,60}?\b([0-9]{3})\s*V\b/i);
+                if (uMatch) specs.voltage = parseInt(uMatch[1]);
 
-                // 5. IP-Schutzart (Sucht bevorzugt im direkten Kontext)
-                let ipMatch = contextText.match(/(?:Schutzart|Schutzgrad|Schutzklasse)[\s\S]{0,100}?\bIP[\s-]*([0-9]{2})\b/i);
+                // 6. IP-Schutzart (Striker Fokus auf das Wort Schutzart, um Nachbargewerke abzuwehren)
+                let ipMatch = contextText.match(/(?:Schutzart|Schutzgrad|Schutzklasse).{0,60}?\bIP\s*([0-9]{2})\b/i);
                 if (!ipMatch) {
-                    ipMatch = contextText.match(/\bIP[\s-]*([0-9]{2})\b/i);
+                    ipMatch = contextText.match(/\bIP\s*([0-9]{2})\b/i);
                 }
                 if (ipMatch) specs.ip = 'IP' + ipMatch[1];
 
-                // 6. Innere Unterteilung (Form)
-                const formMatch = contextText.match(/(?:Form|Bauform|Unterteilung)[\s\S]{0,120}?\b(1|2a|2b|3a|3b|4a|4b)\b/i);
+                // 7. Innere Unterteilung (Form)
+                const formMatch = contextText.match(/(?:Form|Bauform|Unterteilung).{0,80}?\b(1|2a|2b|3a|3b|4a|4b)\b/i);
                 if (formMatch) specs.form = "Form " + formMatch[1];
 
-                // 7. Booleans & Merkmale (Werden nur im isolierten Block gesucht!)
+                // 8. Booleans & Merkmale (Werden nur im isolierten Block gesucht!)
                 if (/(?:Störlichtbogen|Lichtbogenschutz|Personenschutz|Arc)/i.test(contextText)) specs.arcFault = true;
                 if (/(?:MCC|Motor Control Center)/i.test(contextText)) specs.mcc = true;
                 if (/(?:Einschubtechnik|Einschub)/i.test(contextText)) specs.einschub = true;
@@ -205,10 +212,10 @@
                 if (/(?:3NJ63|Lasttrennschalter mit Sicherungen)/i.test(contextText)) specs.nj63 = true;
                 if (/(?:Universaleinbautechnik)/i.test(contextText)) specs.universal = true;
 
-                // Positionen extrahieren
-                const lines = contextText.split('\n');
+                // Positionen extrahieren (Hier greifen wir wieder auf das unformatierte Array zurück für Optik)
+                const lines = rawTextPDF.split('\n');
                 const relevantLines = lines.filter(line => 
-                    (line.includes('Schaltfeld') || line.includes('Leistungsschalter') || line.includes('Einspeisung') || line.includes('Abgang') || line.includes('Sammelschiene') || line.includes('Bemessungs')) &&
+                    (line.includes('Schaltfeld') || line.includes('Leistungsschalter') || line.includes('Einspeisung') || line.includes('Sammelschiene') || line.includes('Niederspannungshauptverteilung')) &&
                     line.trim().length > 10
                 ).slice(0, 15);
                 specs.positions = relevantLines;
@@ -389,7 +396,7 @@
                             </div>
                             <div className="text-sm bg-white/10 px-3 py-1 rounded-full flex items-center space-x-2">
                                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                                <span>v1.1.2</span>
+                                <span>v1.1.3</span>
                             </div>
                         </div>
                     </header>
@@ -666,11 +673,11 @@
                                 
                                 <div className="prose max-w-none text-slate-600">
                                     <p>
-                                        Die KI-basierte Auswahl (v1.1.2) folgt der strikten Kaskade: <strong>Eco -> Classic -> SIVACON S8</strong>. 
+                                        Die KI-basierte Auswahl (v1.1.3) folgt der strikten Kaskade: <strong>Eco -> Classic -> SIVACON S8</strong>. 
                                         Sobald ein technisches Limit der niederen Stufe gerissen wird, rückt das nächsthöhere System nach.
                                     </p>
                                     
-                                    <h3 className="text-lg font-bold text-slate-800 mt-6 mb-3">System-Vergleichstabelle (v1.1.2)</h3>
+                                    <h3 className="text-lg font-bold text-slate-800 mt-6 mb-3">System-Vergleichstabelle (v1.1.3)</h3>
                                     <div className="overflow-x-auto border border-slate-200 rounded-lg mb-8">
                                         <table className="w-full text-sm text-left">
                                             <thead className="bg-slate-100 text-slate-700 uppercase font-semibold text-xs">
