@@ -61,15 +61,6 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData 
 
   return (
     <div className="space-y-8">
-      {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        {renderCard(<>Bemessungsstrom (I<sub>n</sub>)</>, data.current, 'A', <Activity className="w-5 h-5" />, 0.1)}
-        {renderCard(<>Kurzschlussstrom (I<sub>cw</sub>)</>, data.icw, 'kA', <AlertCircle className="w-5 h-5" />, 0.2)}
-        {renderCard(<>Spannung (U<sub>e</sub>)</>, data.voltage, 'V', <Zap className="w-5 h-5" />, 0.3)}
-        {renderCard('Schutzart (IP)', data.ip, '', <Shield className="w-5 h-5" />, 0.4)}
-        {renderCard('Innere Form', data.form, '', <Box className="w-5 h-5" />, 0.5)}
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column: Details & Evidence */}
         <div className="space-y-8 lg:col-span-2">
@@ -81,12 +72,24 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData 
           >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-slate-900 flex items-center">
-                <FileText className="w-5 h-5 mr-2 text-slate-400" />
-                Spezielle Anforderungen
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[#009999] mr-2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" x2="9" y1="1" y2="4"></line><line x1="15" x2="15" y1="1" y2="4"></line><line x1="9" x2="9" y1="20" y2="23"></line><line x1="15" x2="15" y1="20" y2="23"></line><line x1="20" x2="23" y1="9" y2="9"></line><line x1="20" x2="23" y1="14" y2="14"></line><line x1="1" x2="4" y1="9" y2="9"></line><line x1="1" x2="4" y1="14" y2="14"></line></svg>
+                Erkannte Anforderungen NSHV
               </h3>
             </div>
             
-            <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+              {renderCard(<>Bemessungsstrom (I<sub>n</sub>)</>, data.current, 'A', <Activity className="w-5 h-5" />, 0.1)}
+              {renderCard(<>Kurzschlussstrom (I<sub>cw</sub>)</>, data.icw, 'kA', <AlertCircle className="w-5 h-5" />, 0.2)}
+              {renderCard(<>Spannung (U<sub>e</sub>)</>, data.voltage, 'V', <Zap className="w-5 h-5" />, 0.3)}
+              {renderCard('Schutzart (IP)', data.ip, '', <Shield className="w-5 h-5" />, 0.4)}
+              {renderCard('Innere Form', data.form, '', <Box className="w-5 h-5" />, 0.5)}
+            </div>
+
+            <div className="pt-6 border-t border-slate-100">
+              <div className="flex items-center mb-4">
+                <FileText className="w-5 h-5 mr-2 text-slate-700" />
+                <h4 className="text-base font-semibold text-slate-900">Spezielle Anforderungen</h4>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {[
                   { key: 'arcFault', label: 'Störlichtbogenschutz' },
