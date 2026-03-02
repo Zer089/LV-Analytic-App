@@ -38,8 +38,8 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
         - Bemessungsstrom (current) in Ampere (A)
         - Kurzschlussstrom (icw) in kA
         - Spannung (voltage) in Volt (V)
-        - Schutzart (ip) (z.B. "IP31")
-        - Innere Form (form) (z.B. "Form 4b")
+        - Schutzart (ip): MUSS einer dieser Werte sein: "IP30", "IP31", "IP40", "IP41", "IP43", "IP54", oder "unbekannt" (wenn nicht gefunden).
+        - Innere Form (form): MUSS einer dieser Werte sein: "1", "2a", "2b", "3a", "3b", "4a", "4b", oder "unbekannt" (wenn nicht gefunden).
         - Features (Booleans): arcFault (Störlichtbogen), einschub (Einschubtechnik), mcc (Motor Control Center), nj63 (3NJ63 Lasttrenner), kompensation (Blindleistungskompensation)
         
         WICHTIG: Für JEDEN extrahierten Wert (Bemessungsstrom, Kurzschlussstrom, Spannung, Schutzart, Innere Form, und jedes gefundene Feature) MUSST du eine Belegstelle (Evidence) im Array "positions" anlegen.
@@ -48,7 +48,7 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
         - quote: Der exakte Textausschnitt aus dem Dokument, der diesen Wert belegt.
         - page: Die Seitenzahl, auf der der Text gefunden wurde (suche nach den "--- SEITE X ---" Markierungen im Text).
         
-        Gib die Daten im vorgegebenen JSON-Format zurück. Wenn eine Information nicht gefunden wird, nutze Standardwerte (z.B. 400 für voltage, "Form 1" für form) oder null.`
+        Gib die Daten im vorgegebenen JSON-Format zurück. Wenn eine Information nicht gefunden wird, nutze Standardwerte (z.B. 400 für voltage, "unbekannt" für form) oder null.`
       }
     ];
 
@@ -111,8 +111,8 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
       current: rawData.current ?? null,
       icw: rawData.icw ?? null,
       voltage: rawData.voltage ?? 400,
-      ip: rawData.ip || 'IP31',
-      form: rawData.form || 'Form 1',
+      ip: rawData.ip || 'unbekannt',
+      form: rawData.form || 'unbekannt',
       features: {
         arcFault: rawData.features?.arcFault || false,
         einschub: rawData.features?.einschub || false,

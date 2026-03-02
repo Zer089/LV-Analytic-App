@@ -40,9 +40,9 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ data, onSave, onClose 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100 sticky top-0 bg-white z-10">
-          <h2 className="text-xl font-bold text-slate-900">Konfiguration anpassen</h2>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-50">
+        <div className="flex items-center justify-between p-6 border-b border-[#007a7a] sticky top-0 bg-[#009999] z-10 rounded-t-2xl">
+          <h2 className="text-xl font-bold text-white">Konfiguration anpassen</h2>
+          <button onClick={onClose} className="p-2 text-white/80 hover:text-white rounded-lg hover:bg-white/10 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -81,23 +81,38 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ data, onSave, onClose 
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Schutzart</label>
-              <input 
-                type="text" 
+              <select 
                 name="ip" 
-                value={formData.ip || ''} 
+                value={formData.ip || 'unbekannt'} 
                 onChange={handleChange}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-[#009999] focus:border-[#009999] outline-none transition-all"
-              />
+                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-[#009999] focus:border-[#009999] outline-none transition-all bg-white"
+              >
+                <option value="unbekannt">unbekannt</option>
+                <option value="IP30">IP30</option>
+                <option value="IP31">IP31</option>
+                <option value="IP40">IP40</option>
+                <option value="IP41">IP41</option>
+                <option value="IP43">IP43</option>
+                <option value="IP54">IP54</option>
+              </select>
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-slate-700 mb-1">Innere Form</label>
-              <input 
-                type="text" 
+              <select 
                 name="form" 
-                value={formData.form || ''} 
+                value={formData.form || 'unbekannt'} 
                 onChange={handleChange}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-[#009999] focus:border-[#009999] outline-none transition-all"
-              />
+                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-[#009999] focus:border-[#009999] outline-none transition-all bg-white"
+              >
+                <option value="unbekannt">unbekannt</option>
+                <option value="1">1</option>
+                <option value="2a">2a</option>
+                <option value="2b">2b</option>
+                <option value="3a">3a</option>
+                <option value="3b">3b</option>
+                <option value="4a">4a</option>
+                <option value="4b">4b</option>
+              </select>
             </div>
           </div>
 
@@ -130,12 +145,12 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ data, onSave, onClose 
             <select 
               value={override} 
               onChange={(e) => setOverride(e.target.value as any)}
-              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-[#009999] focus:border-[#009999] outline-none transition-all"
+              className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-[#009999] focus:border-[#009999] outline-none transition-all bg-white"
             >
-              <option value="">Automatisch (Logik-Kaskade)</option>
-              <option value="ALPHA 3200 eco">Zwingend ALPHA 3200 eco</option>
-              <option value="ALPHA 3200 classic">Zwingend ALPHA 3200 classic</option>
-              <option value="SIVACON S8">Zwingend SIVACON S8</option>
+              <option value="">⚡ Automatisch (KI Empfehlung)</option>
+              <option value="ALPHA 3200 eco">ALPHA 3200 eco</option>
+              <option value="ALPHA 3200 classic">ALPHA 3200 classic</option>
+              <option value="SIVACON S8">SIVACON S8</option>
             </select>
           </div>
 

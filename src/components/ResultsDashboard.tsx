@@ -94,21 +94,22 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData 
                   { key: 'mcc', label: 'Motor Controll Center (MCC)' },
                   { key: 'nj63', label: 'Lasttrennschalter mit Sicherungen (3NJ63)' },
                   { key: 'kompensation', label: 'Blindleistungskompensation' }
-                ].map(({ key, label }) => {
-                  const isActive = data.features[key as keyof typeof data.features];
-                  return (
-                    <span 
-                      key={key} 
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium border ${
-                        isActive 
-                          ? 'bg-[#009999]/10 text-[#009999] border-[#009999]/20' 
-                          : 'bg-slate-50 text-slate-400 border-slate-200'
-                      }`}
-                    >
-                      {label}
-                    </span>
-                  );
-                })}
+                ]
+                .filter(({ key }) => data.features[key as keyof typeof data.features])
+                .map(({ key, label }) => (
+                  <span 
+                    key={key} 
+                    className="px-3 py-1.5 rounded-full text-sm font-medium border bg-[#009999]/10 text-[#009999] border-[#009999]/20"
+                  >
+                    {label}
+                  </span>
+                ))}
+                
+                {Object.values(data.features).every(v => !v) && (
+                  <span className="text-sm text-slate-500 italic p-3 bg-slate-50 rounded-xl border border-slate-100 w-full">
+                    Keine speziellen Anforderungen gefunden.
+                  </span>
+                )}
               </div>
             </div>
           </motion.div>

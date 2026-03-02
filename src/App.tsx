@@ -39,7 +39,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-[#009999]/20">
       {/* Header */}
       <header className="bg-[#009999] text-white sticky top-0 z-20 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Siemens-like Logo Placeholder */}
             <div className="font-bold text-2xl tracking-tight">
@@ -61,15 +61,12 @@ export default function App() {
                 Neue Analyse
               </button>
             )}
-            <button className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-colors" title="API Settings">
-              <Settings className="w-5 h-5" />
-            </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <AnimatePresence mode="wait">
           {!data && !isLoading && (
             <motion.div 
@@ -142,16 +139,6 @@ export default function App() {
                   <span className="text-sm text-emerald-600 font-medium bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-100">
                     Erfolgreich analysiert
                   </span>
-                </div>
-                
-                {/* Navigation Tabs (Visual only for now, as requested in design) */}
-                <div className="flex bg-slate-200/50 p-1 rounded-lg">
-                  <button className="px-4 py-1.5 text-sm font-medium bg-white text-slate-900 rounded-md shadow-sm">
-                    Dashboard
-                  </button>
-                  <button className="px-4 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-700 rounded-md">
-                    Details
-                  </button>
                 </div>
               </div>
               
