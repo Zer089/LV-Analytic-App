@@ -40,6 +40,16 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
         - Spannung (voltage) in Volt (V)
         - Schutzart (ip): MUSS einer dieser Werte sein: "IP30", "IP31", "IP40", "IP41", "IP43", "IP54", oder "unbekannt" (wenn nicht gefunden).
         - Innere Form (form): MUSS einer dieser Werte sein: "1", "2a", "2b", "3a", "3b", "4a", "4b", oder "unbekannt" (wenn nicht gefunden).
+        - Sammelschienenlage (busbarPosition): "Mittig", "Hinten", "Oben", oder "unbekannt"
+        - Bemessungsstoßspannungsfestigkeit (uimp) in kV
+        - Bemessungsisolationsspannung (ui) in V
+        - Bemessungsstoßkurzschlussstrom (ipk) in kA
+        - Schutzklasse (protectionClass): 1, 2, oder null
+        - Höhe (height) in mm
+        - Sockel (base) in mm
+        - Breite (width) in mm
+        - Tiefe (depth) in mm
+        - Aufstellart (installationType): "Wand", "Rücken an Rücken", "Doppelfront", oder "unbekannt"
         - Features (Booleans): arcFault (Störlichtbogen), einschub (Einschubtechnik), mcc (Motor Control Center), nj63 (3NJ63 Lasttrenner), kompensation (Blindleistungskompensation), universal (Universaleinbautechnik)
         
         WICHTIG: Für JEDEN extrahierten Wert (Bemessungsstrom, Kurzschlussstrom, Spannung, Schutzart, Innere Form, und jedes gefundene Feature) MUSST du eine Belegstelle (Evidence) im Array "positions" anlegen.
@@ -113,6 +123,16 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
       voltage: rawData.voltage ?? 400,
       ip: rawData.ip || 'unbekannt',
       form: rawData.form || 'unbekannt',
+      busbarPosition: rawData.busbarPosition || 'unbekannt',
+      uimp: rawData.uimp ?? null,
+      ui: rawData.ui ?? null,
+      ipk: rawData.ipk ?? null,
+      protectionClass: rawData.protectionClass ?? null,
+      height: rawData.height ?? null,
+      base: rawData.base ?? null,
+      width: rawData.width ?? null,
+      depth: rawData.depth ?? null,
+      installationType: rawData.installationType || 'unbekannt',
       features: {
         arcFault: rawData.features?.arcFault || false,
         einschub: rawData.features?.einschub || false,

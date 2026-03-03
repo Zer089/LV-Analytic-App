@@ -19,6 +19,18 @@ export interface SwitchgearData {
   voltage: number | null;
   ip: string | null;
   form: string | null;
+  
+  busbarPosition: string | null;
+  uimp: number | null;
+  ui: number | null;
+  ipk: number | null;
+  protectionClass: number | null;
+  height: number | null;
+  base: number | null;
+  width: number | null;
+  depth: number | null;
+  installationType: string | null;
+
   features: Features;
   positions: Evidence[];
 }

@@ -7,8 +7,20 @@ export const evaluateSystem = (data: SwitchgearData): EvaluationResult => {
   const current = data.current ?? 0;
   const icw = data.icw ?? 0;
   const voltage = data.voltage ?? 400;
-  const form = data.form || 'Form 1';
-  const ip = data.ip || 'IP31';
+  const form = data.form || 'unbekannt';
+  const ip = data.ip || 'unbekannt';
+  
+  const busbarPosition = data.busbarPosition || 'unbekannt';
+  const uimp = data.uimp ?? 0;
+  const ui = data.ui ?? 0;
+  const ipk = data.ipk ?? 0;
+  const protectionClass = data.protectionClass ?? 1;
+  const height = data.height ?? 2000;
+  const base = data.base ?? 100;
+  const width = data.width ?? 600;
+  const depth = data.depth ?? 600;
+  const installationType = data.installationType || 'unbekannt';
+
   const features = data.features || { arcFault: false, einschub: false, mcc: false, nj63: false, kompensation: false, universal: false };
 
   // Check SIVACON S8
@@ -21,9 +33,13 @@ export const evaluateSystem = (data: SwitchgearData): EvaluationResult => {
     requiresS8 = true;
     reasons.push(`Kurzschlussfestigkeit > 75kA (${icw}kA) nur mit S8 möglich`);
   }
-  if (form.toLowerCase().includes('3') || form.toLowerCase().includes('4')) {
+  if (form.toLowerCase().includes('2a') || form.toLowerCase().includes('3') || form.toLowerCase().includes('4')) {
     requiresS8 = true;
     reasons.push(`Innere Unterteilung ${form} nur mit S8 möglich`);
+  }
+  if (ip.toUpperCase() === 'IP43') {
+    requiresS8 = true;
+    reasons.push(`Schutzart ${ip} nur mit S8 möglich`);
   }
   if (features.einschub) {
     requiresS8 = true;
@@ -32,6 +48,30 @@ export const evaluateSystem = (data: SwitchgearData): EvaluationResult => {
   if (features.mcc) {
     requiresS8 = true;
     reasons.push('Motor Control Center (MCC) nur mit S8 möglich');
+  }
+  if (busbarPosition.toLowerCase().includes('oben')) {
+    requiresS8 = true;
+    reasons.push(`Sammelschienenlage ${busbarPosition} nur mit S8 möglich`);
+  }
+  if (uimp > 8) {
+    requiresS8 = true;
+    reasons.push(`Bemessungsstoßspannungsfestigkeit > 8kV (${uimp}kV) nur mit S8 möglich`);
+  }
+  if (ipk > 165) {
+    requiresS8 = true;
+    reasons.push(`Bemessungsstoßkurzschlussstrom > 165kA (${ipk}kA) nur mit S8 möglich`);
+  }
+  if (height > 2000) {
+    requiresS8 = true;
+    reasons.push(`Höhe > 2000mm (${height}mm) nur mit S8 möglich`);
+  }
+  if (installationType.toLowerCase().includes('doppelfront')) {
+    requiresS8 = true;
+    reasons.push(`Aufstellart ${installationType} nur mit S8 möglich`);
+  }
+  if (width < 350 && width > 0) {
+    requiresS8 = true;
+    reasons.push(`Breite < 350mm (${width}mm) nur mit S8 möglich`);
   }
 
   if (requiresS8) {
@@ -48,6 +88,14 @@ export const evaluateSystem = (data: SwitchgearData): EvaluationResult => {
     requiresClassic = true;
     reasons.push(`Innere Unterteilung ${form} schließt eco aus`);
   }
+  if (ip.toUpperCase() === 'IP40' || ip.toUpperCase() === 'IP41') {
+    requiresClassic = true;
+    reasons.push(`Schutzart ${ip} schließt eco aus`);
+  }
+  if (features.arcFault) {
+    requiresClassic = true;
+    reasons.push('Störlichtbogenschutz schließt eco aus (bei classic auf Anfrage möglich)');
+  }
   if (features.nj63) {
     requiresClassic = true;
     reasons.push('Lasttrennschalter mit Sicherungen (3NJ63) in eco nicht möglich');
@@ -60,9 +108,13 @@ export const evaluateSystem = (data: SwitchgearData): EvaluationResult => {
     requiresClassic = true;
     reasons.push('Universaleinbautechnik in eco nicht möglich');
   }
-  if (ip.toUpperCase() === 'IP40' || ip.toUpperCase() === 'IP41') {
+  if (busbarPosition.toLowerCase().includes('hinten')) {
     requiresClassic = true;
-    reasons.push(`Schutzart ${ip} schließt eco aus`);
+    reasons.push(`Sammelschienenlage ${busbarPosition} schließt eco aus`);
+  }
+  if (width > 1100) {
+    requiresClassic = true;
+    reasons.push(`Breite > 1100mm (${width}mm) schließt eco aus`);
   }
 
   if (requiresClassic) {
@@ -70,6 +122,6 @@ export const evaluateSystem = (data: SwitchgearData): EvaluationResult => {
   }
 
   // Default to Eco
-  reasons.push('Alle Parameter im Standardbereich (In ≤ 3200A, Icw ≤ 75kA, Ue ≤ 400V, Form 1)');
+  reasons.push('Alle Parameter im Standardbereich der ALPHA 3200 eco');
   return { system: 'ALPHA 3200 eco', reasons };
 };
