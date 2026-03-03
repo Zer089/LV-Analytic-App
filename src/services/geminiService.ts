@@ -40,7 +40,7 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
         - Spannung (voltage) in Volt (V)
         - Schutzart (ip): MUSS einer dieser Werte sein: "IP30", "IP31", "IP40", "IP41", "IP43", "IP54", oder "unbekannt" (wenn nicht gefunden).
         - Innere Form (form): MUSS einer dieser Werte sein: "1", "2a", "2b", "3a", "3b", "4a", "4b", oder "unbekannt" (wenn nicht gefunden).
-        - Features (Booleans): arcFault (Störlichtbogen), einschub (Einschubtechnik), mcc (Motor Control Center), nj63 (3NJ63 Lasttrenner), kompensation (Blindleistungskompensation)
+        - Features (Booleans): arcFault (Störlichtbogen), einschub (Einschubtechnik), mcc (Motor Control Center), nj63 (3NJ63 Lasttrenner), kompensation (Blindleistungskompensation), universal (Universaleinbautechnik)
         
         WICHTIG: Für JEDEN extrahierten Wert (Bemessungsstrom, Kurzschlussstrom, Spannung, Schutzart, Innere Form, und jedes gefundene Feature) MUSST du eine Belegstelle (Evidence) im Array "positions" anlegen.
         Jede Belegstelle muss enthalten:
@@ -55,7 +55,7 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
     console.log(`Sending ${extractedText.length} characters to Gemini...`);
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3-flash-preview",
       contents: { parts },
       config: {
         responseMimeType: "application/json",
@@ -119,6 +119,7 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
         mcc: rawData.features?.mcc || false,
         nj63: rawData.features?.nj63 || false,
         kompensation: rawData.features?.kompensation || false,
+        universal: rawData.features?.universal || false,
       },
       positions: rawData.positions || []
     };

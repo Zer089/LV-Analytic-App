@@ -14,10 +14,11 @@ interface ResultsDashboardProps {
 
 export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData }) => {
   const [data, setData] = useState<SwitchgearData>(initialData);
-  const [manualOverride, setManualOverride] = useState<SystemRecommendation | undefined>();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const evaluation = evaluateSystem(data, manualOverride);
+  const evaluation = evaluateSystem(data);
+
+  const isModified = JSON.stringify(data) !== JSON.stringify(initialData);
 
   const systemImages: Record<SystemRecommendation, string> = {
     'ALPHA 3200 eco': '/images/A32-eco.png',
@@ -25,9 +26,8 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData 
     'SIVACON S8': '/images/S8.png'
   };
 
-  const handleSaveConfig = (newData: SwitchgearData, override?: SystemRecommendation) => {
+  const handleSaveConfig = (newData: SwitchgearData) => {
     setData(newData);
-    setManualOverride(override);
     setIsModalOpen(false);
   };
 
@@ -75,6 +75,11 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData 
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[#009999] mr-2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" x2="9" y1="1" y2="4"></line><line x1="15" x2="15" y1="1" y2="4"></line><line x1="9" x2="9" y1="20" y2="23"></line><line x1="15" x2="15" y1="20" y2="23"></line><line x1="20" x2="23" y1="9" y2="9"></line><line x1="20" x2="23" y1="14" y2="14"></line><line x1="1" x2="4" y1="9" y2="9"></line><line x1="1" x2="4" y1="14" y2="14"></line></svg>
                 Erkannte Anforderungen NSHV
               </h3>
+              {isModified && (
+                <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-1 rounded-full border border-yellow-200">
+                  manuelle Änderungen aktiv
+                </span>
+              )}
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -96,7 +101,8 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData 
                   { key: 'einschub', label: 'Einschubtechnik' },
                   { key: 'mcc', label: 'Motor Controll Center (MCC)' },
                   { key: 'nj63', label: 'Lasttrennschalter mit Sicherungen (3NJ63)' },
-                  { key: 'kompensation', label: 'Blindleistungskompensation' }
+                  { key: 'kompensation', label: 'Blindleistungskompensation' },
+                  { key: 'universal', label: 'Universaleinbautechnik' }
                 ]
                 .filter(({ key }) => data.features[key as keyof typeof data.features])
                 .map(({ key, label }) => (
@@ -156,7 +162,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-slate-900 rounded-3xl p-1 shadow-xl lg:col-span-1 flex flex-col h-full"
+          className="bg-slate-900 rounded-3xl p-1 shadow-xl lg:col-span-1 flex flex-col h-fit sticky top-24"
         >
           <div className="bg-slate-800 rounded-[22px] p-6 flex-1 flex flex-col relative overflow-hidden">
             {/* Decorative background element */}
@@ -196,7 +202,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData 
               </div>
             </div>
             
-            <div className="mt-auto pt-6 relative z-10">
+            <div className="mt-auto pt-6 relative z-10 space-y-3">
               <button 
                 onClick={() => setIsModalOpen(true)}
                 className="w-full py-3 px-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors flex items-center justify-center border border-white/10"
@@ -204,6 +210,14 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData 
                 <Settings className="w-4 h-4 mr-2" />
                 Konfiguration anpassen
               </button>
+              {isModified && (
+                <button 
+                  onClick={() => setData(initialData)}
+                  className="w-full py-3 px-4 bg-transparent hover:bg-white/5 text-slate-300 rounded-xl font-medium transition-colors flex items-center justify-center border border-slate-600"
+                >
+                  Zurücksetzen
+                </button>
+              )}
             </div>
           </div>
         </motion.div>

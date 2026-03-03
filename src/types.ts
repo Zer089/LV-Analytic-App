@@ -4,6 +4,7 @@ export interface Features {
   mcc: boolean;
   nj63: boolean;
   kompensation: boolean;
+  universal: boolean;
 }
 
 export interface Evidence {
