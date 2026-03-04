@@ -106,7 +106,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm xl:col-span-7 flex flex-col"
+          className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm xl:col-span-6 flex flex-col"
         >
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-slate-900 flex items-center">
@@ -166,7 +166,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-slate-900 rounded-3xl p-1 shadow-xl xl:col-span-5 flex flex-col h-full"
+          className="bg-slate-900 rounded-3xl p-1 shadow-xl xl:col-span-6 flex flex-col h-full"
         >
           <div className="bg-slate-800 rounded-[22px] p-6 flex-1 flex flex-col relative overflow-hidden">
             {/* Decorative background element */}
@@ -177,22 +177,39 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
                 <h2 className="text-3xl font-bold text-white">
                   {evaluation.system}
                 </h2>
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#009999]/20 text-[#00cccc] border border-[#009999]/30">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold bg-[#009999]/20 text-[#00cccc] border border-[#009999]/30">
                   System-Empfehlung
                 </span>
               </div>
               
               <div className="flex flex-col sm:flex-row gap-6 mb-8 flex-1">
-                {/* Image */}
-                <div className="w-full sm:w-2/5 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center relative self-start">
-                  <img 
-                    src={systemImages[evaluation.system]} 
-                    alt={evaluation.system} 
-                    className="w-full h-auto object-contain"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = `https://placehold.co/600x450/1e293b/00cccc?text=${encodeURIComponent(evaluation.system)}`;
-                    }}
-                  />
+                {/* Image & Button */}
+                <div className="w-full sm:w-2/5 flex flex-col gap-3 self-start">
+                  <div className="rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center relative">
+                    <img 
+                      src={systemImages[evaluation.system]} 
+                      alt={evaluation.system} 
+                      className="w-full h-auto object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `https://placehold.co/600x450/1e293b/00cccc?text=${encodeURIComponent(evaluation.system)}`;
+                      }}
+                    />
+                  </div>
+                  <button 
+                    onClick={() => setIsModalOpen(true)}
+                    className="w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors flex items-center justify-center border border-white/10 text-sm"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Konfiguration anpassen
+                  </button>
+                  {isModified && (
+                    <button 
+                      onClick={() => setData(initialData)}
+                      className="w-full py-2.5 px-4 bg-transparent hover:bg-white/5 text-slate-300 rounded-xl font-medium transition-colors flex items-center justify-center border border-slate-600 text-sm"
+                    >
+                      Zurücksetzen
+                    </button>
+                  )}
                 </div>
                 
                 {/* Ausschluss-Logik */}
@@ -207,24 +224,6 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
                     ))}
                   </ul>
                 </div>
-              </div>
-              
-              <div className="mt-auto pt-4 relative z-10 flex flex-col sm:flex-row gap-3 border-t border-white/10">
-                <button 
-                  onClick={() => setIsModalOpen(true)}
-                  className="flex-1 py-3 px-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors flex items-center justify-center border border-white/10"
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Konfiguration anpassen
-                </button>
-                {isModified && (
-                  <button 
-                    onClick={() => setData(initialData)}
-                    className="flex-1 py-3 px-4 bg-transparent hover:bg-white/5 text-slate-300 rounded-xl font-medium transition-colors flex items-center justify-center border border-slate-600"
-                  >
-                    Zurücksetzen
-                  </button>
-                )}
               </div>
             </div>
           </div>
@@ -286,6 +285,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
           <div className="flex-1 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center relative">
             {file && file.type === 'application/pdf' ? (
               <iframe 
+                key={pdfSrc}
                 src={pdfSrc} 
                 className="w-full h-full border-0 absolute inset-0"
                 title="PDF Viewer"

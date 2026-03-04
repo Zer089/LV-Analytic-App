@@ -7,13 +7,12 @@ interface LoadingScreenProps {
 }
 
 const steps = [
-  "Dokument wird hochgeladen...",
-  "Textextraktion (OCR) läuft...",
-  "KI analysiert elektrotechnische Parameter...",
-  "Spezielle Anforderungen werden identifiziert...",
-  "Belegstellen werden verknüpft...",
-  "System-Empfehlung wird berechnet...",
-  "Ergebnisse werden aufbereitet..."
+  { text: "Dokument wird vorbereitet...", duration: 1000, targetProgress: 10 },
+  { text: "Textextraktion (OCR) läuft...", duration: 3000, targetProgress: 35 },
+  { text: "KI analysiert elektrotechnische Parameter...", duration: 4000, targetProgress: 65 },
+  { text: "Spezielle Anforderungen werden identifiziert...", duration: 3000, targetProgress: 80 },
+  { text: "System-Empfehlung wird berechnet...", duration: 2000, targetProgress: 90 },
+  { text: "Ergebnisse werden finalisiert...", duration: 10000, targetProgress: 99 } // Hangs here until actual completion
 ];
 
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ fileName }) => {
@@ -21,29 +20,45 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ fileName }) => {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    // Simulate progress over ~15 seconds (typical API call time)
-    const totalDuration = 15000;
-    const intervalTime = 100;
-    const stepsCount = steps.length;
-    const stepDuration = totalDuration / stepsCount;
+    let isMounted = true;
+    let currentProgress = 0;
 
-    const timer = setInterval(() => {
-      setProgress((prev) => {
-        const next = prev + (100 / (totalDuration / intervalTime));
-        return next > 99 ? 99 : next; // Don't reach 100% until actually done
-      });
-    }, intervalTime);
+    const runSteps = async () => {
+      for (let i = 0; i < steps.length; i++) {
+        if (!isMounted) return;
+        setCurrentStep(i);
+        const step = steps[i];
+        
+        const startTime = Date.now();
+        const startProgress = currentProgress;
+        
+        await new Promise<void>(resolve => {
+          const animate = () => {
+            if (!isMounted) return resolve();
+            const elapsed = Date.now() - startTime;
+            const progressRatio = Math.min(elapsed / step.duration, 1);
+            
+            // Ease out quad for smoother progress
+            const easeOut = 1 - (1 - progressRatio) * (1 - progressRatio);
+            currentProgress = startProgress + (step.targetProgress - startProgress) * easeOut;
+            
+            setProgress(currentProgress);
+            
+            if (progressRatio < 1) {
+              requestAnimationFrame(animate);
+            } else {
+              resolve();
+            }
+          };
+          requestAnimationFrame(animate);
+        });
+      }
+    };
 
-    const stepTimer = setInterval(() => {
-      setCurrentStep((prev) => {
-        const next = prev + 1;
-        return next >= stepsCount ? stepsCount - 1 : next;
-      });
-    }, stepDuration);
+    runSteps();
 
     return () => {
-      clearInterval(timer);
-      clearInterval(stepTimer);
+      isMounted = false;
     };
   }, []);
 
@@ -83,7 +98,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ fileName }) => {
           
           <div className="flex flex-col items-center justify-center space-y-2">
             <p className="text-sm font-medium text-[#009999] animate-pulse">
-              {steps[currentStep]}
+              {steps[currentStep].text}
             </p>
             <p className="text-xs text-slate-400">
               Analysiere "{fileName}"...
