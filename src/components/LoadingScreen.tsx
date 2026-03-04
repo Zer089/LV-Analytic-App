@@ -81,7 +81,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ fileName }) => {
           </div>
           
           <h2 className="text-3xl font-bold text-slate-900 mb-4">
-            LV Analyse starten
+            LV Analyse läuft...
           </h2>
           
           <p className="text-lg text-slate-600 mb-12">
