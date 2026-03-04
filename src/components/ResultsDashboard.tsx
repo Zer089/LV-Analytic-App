@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { SwitchgearData, SystemRecommendation } from '../types';
 import { evaluateSystem } from '../utils/evaluation';
 import { ConfigModal } from './ConfigModal';
@@ -16,6 +16,43 @@ interface ResultsDashboardProps {
 export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData, file }) => {
   const [data, setData] = useState<SwitchgearData>(initialData);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pdfPage, setPdfPage] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string | null>(null);
+  const [pdfBaseUrl, setPdfBaseUrl] = useState<string>('');
+
+  useEffect(() => {
+    if (file && file.type === 'application/pdf') {
+      const url = URL.createObjectURL(file);
+      setPdfBaseUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [file]);
+
+  const pdfSrc = useMemo(() => {
+    if (!pdfBaseUrl) return '';
+    let url = pdfBaseUrl;
+    const params = [];
+    if (pdfPage) params.push(`page=${pdfPage}`);
+    if (searchQuery) {
+      // Some PDF viewers support search parameter
+      params.push(`search=${encodeURIComponent(searchQuery)}`);
+    }
+    
+    if (params.length > 0) {
+      url += `#${params.join('&')}`;
+    }
+    return url;
+  }, [pdfBaseUrl, pdfPage, searchQuery]);
+
+  const handlePageClick = (page: number | undefined, quote: string) => {
+    if (page) {
+      setPdfPage(page);
+      // Optional: use quote for search if supported by the viewer
+      // Clean up the quote to improve search chances (remove punctuation, etc.)
+      const cleanQuote = quote.replace(/["']/g, '').trim();
+      setSearchQuery(cleanQuote);
+    }
+  };
 
   const evaluation = evaluateSystem(data);
 
@@ -215,9 +252,12 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
                     <div className="flex justify-between items-start mb-2">
                       <span className="font-semibold text-sm text-[#009999]">{pos.field}</span>
                       {pos.page && (
-                        <span className="text-xs font-medium bg-white px-2 py-1 rounded-md text-slate-500 border border-slate-200 shadow-sm">
+                        <button 
+                          onClick={() => handlePageClick(pos.page, pos.quote)}
+                          className="text-xs font-medium bg-white hover:bg-slate-50 px-2 py-1 rounded-md text-slate-500 hover:text-[#009999] border border-slate-200 shadow-sm transition-colors cursor-pointer"
+                        >
                           Seite {pos.page}
-                        </span>
+                        </button>
                       )}
                     </div>
                     <p className="text-sm text-slate-700 italic">"{pos.quote}"</p>
@@ -246,7 +286,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
           <div className="flex-1 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center relative">
             {file && file.type === 'application/pdf' ? (
               <iframe 
-                src={URL.createObjectURL(file)} 
+                src={pdfSrc} 
                 className="w-full h-full border-0 absolute inset-0"
                 title="PDF Viewer"
               />
