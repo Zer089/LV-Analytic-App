@@ -58,51 +58,78 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
         - quote: Der exakte Textausschnitt aus dem Dokument, der diesen Wert belegt.
         - page: Die Seitenzahl, auf der der Text gefunden wurde (suche nach den "--- SEITE X ---" Markierungen im Text).
         
-        Gib die Daten im vorgegebenen JSON-Format zurück. Wenn eine Information nicht gefunden wird, nutze Standardwerte (z.B. 400 für voltage, "unbekannt" für form) oder null.`
+        Gib die Daten im vorgegebenen JSON-Format zurück. Wenn eine Information nicht gefunden wird, nutze null (für Zahlen) oder "unbekannt" (für Strings). Nutze NIEMALS ausgedachte Standardwerte.`
       }
     ];
 
     console.log(`Sending ${extractedText.length} characters to Gemini...`);
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: { parts },
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            current: { type: Type.NUMBER, description: "Bemessungsstrom in Ampere" },
-            icw: { type: Type.NUMBER, description: "Kurzschlussstrom in kA" },
-            voltage: { type: Type.NUMBER, description: "Spannung in Volt" },
-            ip: { type: Type.STRING, description: "Schutzart (z.B. 'IP31')" },
-            form: { type: Type.STRING, description: "Innere Form (z.B. 'Form 4b')" },
-            features: {
+    let response;
+    const config = {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          current: { type: Type.NUMBER, description: "Bemessungsstrom in Ampere" },
+          icw: { type: Type.NUMBER, description: "Kurzschlussstrom in kA" },
+          voltage: { type: Type.NUMBER, description: "Spannung in Volt" },
+          ip: { type: Type.STRING, description: "Schutzart (z.B. 'IP31')" },
+          form: { type: Type.STRING, description: "Innere Form (z.B. 'Form 4b')" },
+          busbarPosition: { type: Type.STRING, description: "Sammelschienenlage" },
+          uimp: { type: Type.NUMBER, description: "Bemessungsstoßspannungsfestigkeit in kV" },
+          ui: { type: Type.NUMBER, description: "Bemessungsisolationsspannung in V" },
+          ipk: { type: Type.NUMBER, description: "Bemessungsstoßkurzschlussstrom in kA" },
+          protectionClass: { type: Type.NUMBER, description: "Schutzklasse" },
+          height: { type: Type.NUMBER, description: "Höhe in mm" },
+          base: { type: Type.NUMBER, description: "Sockel in mm" },
+          width: { type: Type.NUMBER, description: "Breite in mm" },
+          depth: { type: Type.NUMBER, description: "Tiefe in mm" },
+          installationType: { type: Type.STRING, description: "Aufstellart" },
+          features: {
+            type: Type.OBJECT,
+            properties: {
+              arcFault: { type: Type.BOOLEAN, description: "Störlichtbogen" },
+              einschub: { type: Type.BOOLEAN, description: "Einschubtechnik" },
+              mcc: { type: Type.BOOLEAN, description: "Motor Control Center" },
+              nj63: { type: Type.BOOLEAN, description: "3NJ63 Lasttrenner" },
+              kompensation: { type: Type.BOOLEAN, description: "Blindleistungskompensation" },
+              universal: { type: Type.BOOLEAN, description: "Universaleinbautechnik" }
+            }
+          },
+          positions: { 
+            type: Type.ARRAY, 
+            items: { 
               type: Type.OBJECT,
               properties: {
-                arcFault: { type: Type.BOOLEAN, description: "Störlichtbogen" },
-                einschub: { type: Type.BOOLEAN, description: "Einschubtechnik" },
-                mcc: { type: Type.BOOLEAN, description: "Motor Control Center" },
-                nj63: { type: Type.BOOLEAN, description: "3NJ63 Lasttrenner" },
-                kompensation: { type: Type.BOOLEAN, description: "Blindleistungskompensation" }
+                field: { type: Type.STRING, description: "Name des Parameters" },
+                quote: { type: Type.STRING, description: "Exakter Textausschnitt" },
+                page: { type: Type.NUMBER, description: "Seitenzahl" }
               }
-            },
-            positions: { 
-              type: Type.ARRAY, 
-              items: { 
-                type: Type.OBJECT,
-                properties: {
-                  field: { type: Type.STRING, description: "Name des Parameters" },
-                  quote: { type: Type.STRING, description: "Exakter Textausschnitt" },
-                  page: { type: Type.NUMBER, description: "Seitenzahl" }
-                }
-              }, 
-              description: "Zitate aus dem LV als Beleg für JEDEN gefundenen Wert, inkl. Seitenzahl." 
-            }
+            }, 
+            description: "Zitate aus dem LV als Beleg für JEDEN gefundenen Wert, inkl. Seitenzahl." 
           }
         }
       }
-    });
+    };
+
+    try {
+      response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: { parts },
+        config
+      });
+    } catch (error: any) {
+      if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota') || error?.message?.includes('rate limit')) {
+        console.warn("Rate limit reached for gemini-3-flash-preview, falling back to gemini-2.5-flash...");
+        response = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: { parts },
+          config
+        });
+      } else {
+        throw error;
+      }
+    }
 
     console.log("Raw Gemini Response:", response.text);
     
@@ -120,7 +147,7 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
     return {
       current: rawData.current ?? null,
       icw: rawData.icw ?? null,
-      voltage: rawData.voltage ?? 400,
+      voltage: rawData.voltage ?? null,
       ip: rawData.ip || 'unbekannt',
       form: rawData.form || 'unbekannt',
       busbarPosition: rawData.busbarPosition || 'unbekannt',

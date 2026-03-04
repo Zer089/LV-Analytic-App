@@ -29,6 +29,47 @@ export default function App() {
     }
   };
 
+  const handleSimulateAnalysis = () => {
+    setIsLoading(true);
+    setError(null);
+    
+    // Simulate network delay
+    setTimeout(() => {
+      setData({
+        current: 4000,
+        icw: 100,
+        voltage: 690,
+        ip: "IP54",
+        form: "4b",
+        busbarPosition: "Oben",
+        uimp: 12,
+        ui: 1000,
+        ipk: 220,
+        protectionClass: 1,
+        height: 2200,
+        base: 200,
+        width: 800,
+        depth: 800,
+        installationType: "Doppelfront",
+        features: {
+          arcFault: true,
+          einschub: true,
+          mcc: false,
+          nj63: false,
+          kompensation: true,
+          universal: false
+        },
+        positions: [
+          { field: "Bemessungsstrom", quote: "Der Bemessungsstrom der Anlage beträgt 4000A.", page: 12 },
+          { field: "Schutzart", quote: "Die Schaltanlage ist in Schutzart IP54 auszuführen.", page: 15 },
+          { field: "Innere Form", quote: "Gefordert wird die innere Unterteilung Form 4b.", page: 18 },
+          { field: "Einschubtechnik", quote: "Alle Abgänge sind in Einschubtechnik auszuführen.", page: 22 }
+        ]
+      });
+      setIsLoading(false);
+    }, 1500);
+  };
+
   const reset = () => {
     setFile(null);
     setData(null);
@@ -39,7 +80,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-[#009999]/20">
       {/* Header */}
       <header className="bg-[#009999] text-white sticky top-0 z-20 shadow-md">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Siemens-like Logo Placeholder */}
             <div className="font-bold text-2xl tracking-tight">
@@ -47,7 +88,10 @@ export default function App() {
             </div>
             <div className="h-6 w-px bg-white/30 hidden sm:block"></div>
             <div className="hidden sm:flex flex-col">
-              <h1 className="text-sm font-semibold tracking-wide">LV Analytic App</h1>
+              <h1 className="text-sm font-semibold tracking-wide flex items-center gap-2">
+                LV Analytic App
+                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.2.0</span>
+              </h1>
               <span className="text-[10px] text-white/80 uppercase tracking-wider">AI-Powered Extraction</span>
             </div>
           </div>
@@ -66,7 +110,7 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <AnimatePresence mode="wait">
           {!data && !isLoading && (
             <motion.div 
@@ -90,6 +134,17 @@ export default function App() {
               
               <FileUpload onFileSelect={handleFileSelect} isLoading={isLoading} />
               
+              <div className="mt-8 flex justify-center">
+                <button
+                  onClick={handleSimulateAnalysis}
+                  disabled={isLoading}
+                  className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition-colors border border-slate-200 flex items-center shadow-sm"
+                >
+                  <Activity className="w-4 h-4 mr-2 text-slate-500" />
+                  Analyse simulieren (Test)
+                </button>
+              </div>
+
               {error && (
                 <div className="mt-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 text-sm text-center">
                   {error}
@@ -142,7 +197,7 @@ export default function App() {
                 </div>
               </div>
               
-              <ResultsDashboard initialData={data} />
+              <ResultsDashboard initialData={data} file={file} />
             </motion.div>
           )}
         </AnimatePresence>

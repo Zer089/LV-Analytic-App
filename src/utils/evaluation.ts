@@ -3,33 +3,32 @@ import { SwitchgearData, EvaluationResult, SystemRecommendation } from '../types
 export const evaluateSystem = (data: SwitchgearData): EvaluationResult => {
   const reasons: string[] = [];
   
-  // Fallbacks
-  const current = data.current ?? 0;
-  const icw = data.icw ?? 0;
-  const voltage = data.voltage ?? 400;
+  const current = data.current;
+  const icw = data.icw;
+  const voltage = data.voltage;
   const form = data.form || 'unbekannt';
   const ip = data.ip || 'unbekannt';
   
   const busbarPosition = data.busbarPosition || 'unbekannt';
-  const uimp = data.uimp ?? 0;
-  const ui = data.ui ?? 0;
-  const ipk = data.ipk ?? 0;
-  const protectionClass = data.protectionClass ?? 1;
-  const height = data.height ?? 2000;
-  const base = data.base ?? 100;
-  const width = data.width ?? 600;
-  const depth = data.depth ?? 600;
+  const uimp = data.uimp;
+  const ui = data.ui;
+  const ipk = data.ipk;
+  const protectionClass = data.protectionClass;
+  const height = data.height;
+  const base = data.base;
+  const width = data.width;
+  const depth = data.depth;
   const installationType = data.installationType || 'unbekannt';
 
   const features = data.features || { arcFault: false, einschub: false, mcc: false, nj63: false, kompensation: false, universal: false };
 
   // Check SIVACON S8
   let requiresS8 = false;
-  if (current > 3200) {
+  if (current !== null && current > 3200) {
     requiresS8 = true;
     reasons.push(`Bemessungsstrom > 3200A (${current}A) nur mit S8 möglich`);
   }
-  if (icw > 75) {
+  if (icw !== null && icw > 75) {
     requiresS8 = true;
     reasons.push(`Kurzschlussfestigkeit > 75kA (${icw}kA) nur mit S8 möglich`);
   }
@@ -53,15 +52,15 @@ export const evaluateSystem = (data: SwitchgearData): EvaluationResult => {
     requiresS8 = true;
     reasons.push(`Sammelschienenlage ${busbarPosition} nur mit S8 möglich`);
   }
-  if (uimp > 8) {
+  if (uimp !== null && uimp > 8) {
     requiresS8 = true;
     reasons.push(`Bemessungsstoßspannungsfestigkeit > 8kV (${uimp}kV) nur mit S8 möglich`);
   }
-  if (ipk > 165) {
+  if (ipk !== null && ipk > 165) {
     requiresS8 = true;
     reasons.push(`Bemessungsstoßkurzschlussstrom > 165kA (${ipk}kA) nur mit S8 möglich`);
   }
-  if (height > 2000) {
+  if (height !== null && height > 2000) {
     requiresS8 = true;
     reasons.push(`Höhe > 2000mm (${height}mm) nur mit S8 möglich`);
   }
@@ -69,18 +68,14 @@ export const evaluateSystem = (data: SwitchgearData): EvaluationResult => {
     requiresS8 = true;
     reasons.push(`Aufstellart ${installationType} nur mit S8 möglich`);
   }
-  if (width < 350 && width > 0) {
+  if (width !== null && width < 350 && width > 0) {
     requiresS8 = true;
     reasons.push(`Breite < 350mm (${width}mm) nur mit S8 möglich`);
   }
 
-  if (requiresS8) {
-    return { system: 'SIVACON S8', reasons };
-  }
-
   // Check ALPHA 3200 classic
   let requiresClassic = false;
-  if (voltage > 400) {
+  if (voltage !== null && voltage > 400) {
     requiresClassic = true;
     reasons.push(`Spannung > 400V (${voltage}V) schließt eco aus`);
   }
@@ -112,16 +107,21 @@ export const evaluateSystem = (data: SwitchgearData): EvaluationResult => {
     requiresClassic = true;
     reasons.push(`Sammelschienenlage ${busbarPosition} schließt eco aus`);
   }
-  if (width > 1100) {
+  if (width !== null && width > 1100) {
     requiresClassic = true;
     reasons.push(`Breite > 1100mm (${width}mm) schließt eco aus`);
   }
 
-  if (requiresClassic) {
-    return { system: 'ALPHA 3200 classic', reasons };
+  let system: SystemRecommendation = 'ALPHA 3200 eco';
+  if (requiresS8) {
+    system = 'SIVACON S8';
+  } else if (requiresClassic) {
+    system = 'ALPHA 3200 classic';
   }
 
-  // Default to Eco
-  reasons.push('Alle Parameter im Standardbereich der ALPHA 3200 eco');
-  return { system: 'ALPHA 3200 eco', reasons };
+  if (reasons.length === 0) {
+    reasons.push('Alle Parameter im Standardbereich der ALPHA 3200 eco');
+  }
+
+  return { system, reasons };
 };

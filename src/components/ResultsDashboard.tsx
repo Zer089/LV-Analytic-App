@@ -10,9 +10,10 @@ import { motion } from 'motion/react';
 
 interface ResultsDashboardProps {
   initialData: SwitchgearData;
+  file?: File | null;
 }
 
-export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData }) => {
+export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData, file }) => {
   const [data, setData] = useState<SwitchgearData>(initialData);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -61,78 +62,152 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData 
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column: Details & Evidence */}
-        <div className="space-y-8 lg:col-span-2">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-slate-900 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[#009999] mr-2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" x2="9" y1="1" y2="4"></line><line x1="15" x2="15" y1="1" y2="4"></line><line x1="9" x2="9" y1="20" y2="23"></line><line x1="15" x2="15" y1="20" y2="23"></line><line x1="20" x2="23" y1="9" y2="9"></line><line x1="20" x2="23" y1="14" y2="14"></line><line x1="1" x2="4" y1="9" y2="9"></line><line x1="1" x2="4" y1="14" y2="14"></line></svg>
-                Erkannte Anforderungen NSHV
-              </h3>
-              {isModified && (
-                <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-1 rounded-full border border-yellow-200">
-                  manuelle Änderungen aktiv
+      {/* Top Row */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        {/* Left Column: Details */}
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm xl:col-span-7 flex flex-col"
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-slate-900 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[#009999] mr-2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" x2="9" y1="1" y2="4"></line><line x1="15" x2="15" y1="1" y2="4"></line><line x1="9" x2="9" y1="20" y2="23"></line><line x1="15" x2="15" y1="20" y2="23"></line><line x1="20" x2="23" y1="9" y2="9"></line><line x1="20" x2="23" y1="14" y2="14"></line><line x1="1" x2="4" y1="9" y2="9"></line><line x1="1" x2="4" y1="14" y2="14"></line></svg>
+              Erkannte Anforderungen NSHV
+            </h3>
+            {isModified && (
+              <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-1 rounded-full border border-yellow-200">
+                manuelle Änderungen aktiv
+              </span>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
+            {renderCard(<>Bemessungsstrom (I<sub>n</sub>)</>, data.current, 'A', <Activity className="w-5 h-5" />, 0.1)}
+            {renderCard(<>Kurzschlussstrom (I<sub>cw</sub>)</>, data.icw, 'kA', <AlertCircle className="w-5 h-5" />, 0.2)}
+            {renderCard(<>Spannung (U<sub>e</sub>)</>, data.voltage, 'V', <Zap className="w-5 h-5" />, 0.3)}
+            {renderCard('Schutzart (IP)', data.ip, '', <Shield className="w-5 h-5" />, 0.4)}
+            {renderCard('Innere Form', data.form, '', <Box className="w-5 h-5" />, 0.5)}
+          </div>
+
+          <div className="pt-6 border-t border-slate-100 mt-auto">
+            <div className="flex items-center mb-4">
+              <FileText className="w-5 h-5 mr-2 text-slate-700" />
+              <h4 className="text-base font-semibold text-slate-900">Spezielle Anforderungen</h4>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: 'arcFault', label: 'Störlichtbogenschutz' },
+                { key: 'einschub', label: 'Einschubtechnik' },
+                { key: 'mcc', label: 'Motor Controll Center (MCC)' },
+                { key: 'nj63', label: 'Lasttrennschalter mit Sicherungen (3NJ63)' },
+                { key: 'kompensation', label: 'Blindleistungskompensation' },
+                { key: 'universal', label: 'Universaleinbautechnik' }
+              ]
+              .filter(({ key }) => data.features[key as keyof typeof data.features])
+              .map(({ key, label }) => (
+                <span 
+                  key={key} 
+                  className="px-3 py-1.5 rounded-full text-sm font-medium border bg-[#009999]/10 text-[#009999] border-[#009999]/20"
+                >
+                  {label}
+                </span>
+              ))}
+              
+              {Object.values(data.features).every(v => !v) && (
+                <span className="text-sm text-slate-500 italic p-3 bg-slate-50 rounded-xl border border-slate-100 w-full">
+                  Keine speziellen Anforderungen gefunden.
                 </span>
               )}
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-              {renderCard(<>Bemessungsstrom (I<sub>n</sub>)</>, data.current, 'A', <Activity className="w-5 h-5" />, 0.1)}
-              {renderCard(<>Kurzschlussstrom (I<sub>cw</sub>)</>, data.icw, 'kA', <AlertCircle className="w-5 h-5" />, 0.2)}
-              {renderCard(<>Spannung (U<sub>e</sub>)</>, data.voltage, 'V', <Zap className="w-5 h-5" />, 0.3)}
-              {renderCard('Schutzart (IP)', data.ip, '', <Shield className="w-5 h-5" />, 0.4)}
-              {renderCard('Innere Form', data.form, '', <Box className="w-5 h-5" />, 0.5)}
-            </div>
+          </div>
+        </motion.div>
 
-            <div className="pt-6 border-t border-slate-100">
-              <div className="flex items-center mb-4">
-                <FileText className="w-5 h-5 mr-2 text-slate-700" />
-                <h4 className="text-base font-semibold text-slate-900">Spezielle Anforderungen</h4>
+        {/* Right Column: Recommendation */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="bg-slate-900 rounded-3xl p-1 shadow-xl xl:col-span-5 flex flex-col h-full"
+        >
+          <div className="bg-slate-800 rounded-[22px] p-6 flex-1 flex flex-col relative overflow-hidden">
+            {/* Decorative background element */}
+            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-[#009999] opacity-20 blur-3xl rounded-full pointer-events-none"></div>
+            
+            <div className="relative z-10 flex flex-col h-full">
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-3xl font-bold text-white">
+                  {evaluation.system}
+                </h2>
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#009999]/20 text-[#00cccc] border border-[#009999]/30">
+                  System-Empfehlung
+                </span>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { key: 'arcFault', label: 'Störlichtbogenschutz' },
-                  { key: 'einschub', label: 'Einschubtechnik' },
-                  { key: 'mcc', label: 'Motor Controll Center (MCC)' },
-                  { key: 'nj63', label: 'Lasttrennschalter mit Sicherungen (3NJ63)' },
-                  { key: 'kompensation', label: 'Blindleistungskompensation' },
-                  { key: 'universal', label: 'Universaleinbautechnik' }
-                ]
-                .filter(({ key }) => data.features[key as keyof typeof data.features])
-                .map(({ key, label }) => (
-                  <span 
-                    key={key} 
-                    className="px-3 py-1.5 rounded-full text-sm font-medium border bg-[#009999]/10 text-[#009999] border-[#009999]/20"
-                  >
-                    {label}
-                  </span>
-                ))}
+              
+              <div className="flex flex-col sm:flex-row gap-6 mb-8 flex-1">
+                {/* Image */}
+                <div className="w-full sm:w-2/5 rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center relative self-start">
+                  <img 
+                    src={systemImages[evaluation.system]} 
+                    alt={evaluation.system} 
+                    className="w-full h-auto object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = `https://placehold.co/600x450/1e293b/00cccc?text=${encodeURIComponent(evaluation.system)}`;
+                    }}
+                  />
+                </div>
                 
-                {Object.values(data.features).every(v => !v) && (
-                  <span className="text-sm text-slate-500 italic p-3 bg-slate-50 rounded-xl border border-slate-100 w-full">
-                    Keine speziellen Anforderungen gefunden.
-                  </span>
+                {/* Ausschluss-Logik */}
+                <div className="w-full sm:w-3/5 flex flex-col">
+                  <h4 className="text-sm font-medium text-slate-400 mb-3 uppercase tracking-wider">Ausschluss-Logik</h4>
+                  <ul className="space-y-3 overflow-y-auto pr-2 custom-scrollbar max-h-[250px]">
+                    {evaluation.reasons.map((reason, idx) => (
+                      <li key={idx} className="flex items-start text-sm text-slate-300">
+                        <ChevronRight className="w-4 h-4 mr-2 text-[#009999] mt-0.5 shrink-0" />
+                        <span>{reason}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="mt-auto pt-4 relative z-10 flex flex-col sm:flex-row gap-3 border-t border-white/10">
+                <button 
+                  onClick={() => setIsModalOpen(true)}
+                  className="flex-1 py-3 px-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors flex items-center justify-center border border-white/10"
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Konfiguration anpassen
+                </button>
+                {isModified && (
+                  <button 
+                    onClick={() => setData(initialData)}
+                    className="flex-1 py-3 px-4 bg-transparent hover:bg-white/5 text-slate-300 rounded-xl font-medium transition-colors flex items-center justify-center border border-slate-600"
+                  >
+                    Zurücksetzen
+                  </button>
                 )}
               </div>
             </div>
-          </motion.div>
+          </div>
+        </motion.div>
+      </div>
 
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.6 }}
-            className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm"
-          >
-            <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
-              <CheckCircle2 className="w-5 h-5 mr-2 text-[#009999]" />
-              Belegstellen (KI-Extraktion)
-            </h3>
+      {/* Bottom Row */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        {/* Belegstellen */}
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.6 }}
+          className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm xl:col-span-5 flex flex-col h-[600px]"
+        >
+          <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center shrink-0">
+            <CheckCircle2 className="w-5 h-5 mr-2 text-[#009999]" />
+            Belegstellen (KI-Extraktion)
+          </h3>
+          <div className="overflow-y-auto flex-1 pr-2 custom-scrollbar">
             {data.positions && data.positions.length > 0 ? (
               <ul className="space-y-4">
                 {data.positions.map((pos, idx) => (
@@ -154,71 +229,36 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData 
                 Keine spezifischen Textstellen als Beleg gefunden.
               </p>
             )}
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
 
-        {/* Right Column: Recommendation */}
+        {/* Document Viewer */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="bg-slate-900 rounded-3xl p-1 shadow-xl lg:col-span-1 flex flex-col h-fit sticky top-24"
+          transition={{ delay: 0.8 }}
+          className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm xl:col-span-7 flex flex-col h-[600px]"
         >
-          <div className="bg-slate-800 rounded-[22px] p-6 flex-1 flex flex-col relative overflow-hidden">
-            {/* Decorative background element */}
-            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-[#009999] opacity-20 blur-3xl rounded-full pointer-events-none"></div>
-            
-            <div className="relative z-10">
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#009999]/20 text-[#00cccc] border border-[#009999]/30 mb-4">
-                System-Empfehlung
-              </span>
-              
-              <h2 className="text-3xl font-bold text-white mb-2">
-                {evaluation.system}
-              </h2>
-              
-              <div className="mt-6 mb-6 rounded-xl overflow-hidden bg-white/5 border border-white/10 aspect-[4/3] flex items-center justify-center relative">
-                <img 
-                  src={systemImages[evaluation.system]} 
-                  alt={evaluation.system} 
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    // Fallback if the user hasn't uploaded the image yet
-                    (e.target as HTMLImageElement).src = `https://placehold.co/600x450/1e293b/00cccc?text=${encodeURIComponent(evaluation.system)}`;
-                  }}
-                />
+          <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center shrink-0">
+            <FileText className="w-5 h-5 mr-2 text-slate-700" />
+            Leistungsverzeichnis (LV)
+          </h3>
+          <div className="flex-1 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center relative">
+            {file && file.type === 'application/pdf' ? (
+              <iframe 
+                src={URL.createObjectURL(file)} 
+                className="w-full h-full border-0 absolute inset-0"
+                title="PDF Viewer"
+              />
+            ) : (
+              <div className="text-center p-8">
+                <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                <p className="text-slate-500 font-medium">Vorschau nicht verfügbar</p>
+                <p className="text-slate-400 text-sm mt-1">
+                  {file ? 'Nur PDF-Dateien können hier angezeigt werden.' : 'Kein Dokument hochgeladen.'}
+                </p>
               </div>
-              
-              <div className="mt-8 mb-6">
-                <h4 className="text-sm font-medium text-slate-400 mb-3 uppercase tracking-wider">Ausschluss-Logik</h4>
-                <ul className="space-y-3">
-                  {evaluation.reasons.map((reason, idx) => (
-                    <li key={idx} className="flex items-start text-sm text-slate-300">
-                      <ChevronRight className="w-4 h-4 mr-2 text-[#009999] mt-0.5 shrink-0" />
-                      <span>{reason}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            
-            <div className="mt-auto pt-6 relative z-10 space-y-3">
-              <button 
-                onClick={() => setIsModalOpen(true)}
-                className="w-full py-3 px-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors flex items-center justify-center border border-white/10"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Konfiguration anpassen
-              </button>
-              {isModified && (
-                <button 
-                  onClick={() => setData(initialData)}
-                  className="w-full py-3 px-4 bg-transparent hover:bg-white/5 text-slate-300 rounded-xl font-medium transition-colors flex items-center justify-center border border-slate-600"
-                >
-                  Zurücksetzen
-                </button>
-              )}
-            </div>
+            )}
           </div>
         </motion.div>
       </div>
