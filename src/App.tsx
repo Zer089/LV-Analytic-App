@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FileUpload } from './components/FileUpload';
 import { ResultsDashboard } from './components/ResultsDashboard';
+import { LoadingScreen } from './components/LoadingScreen';
 import { extractSwitchgearData } from './services/geminiService';
 import { SwitchgearData } from './types';
 import { Loader2, FileText, ArrowLeft, Settings, Activity } from 'lucide-react';
@@ -77,7 +78,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-[#009999]/20">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-[#009999]/20 bg-[url('/AI_bagground.png')] bg-cover bg-center bg-no-repeat bg-fixed">
       {/* Header */}
       <header className="bg-[#009999] text-white sticky top-0 z-20 shadow-md">
         <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -90,7 +91,7 @@ export default function App() {
             <div className="hidden sm:flex flex-col">
               <h1 className="text-sm font-semibold tracking-wide flex items-center gap-2">
                 LV Analytic App
-                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.2.0</span>
+                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.3.0</span>
               </h1>
               <span className="text-[10px] text-white/80 uppercase tracking-wider">AI-Powered Extraction</span>
             </div>
@@ -154,29 +155,7 @@ export default function App() {
           )}
 
           {isLoading && (
-            <motion.div 
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex flex-col items-center justify-center py-32"
-            >
-              <div className="relative">
-                <div className="absolute inset-0 bg-[#009999]/20 rounded-full blur-xl animate-pulse"></div>
-                <div className="bg-white p-4 rounded-full shadow-lg relative border border-slate-100">
-                  <Loader2 className="w-10 h-10 text-[#009999] animate-spin" />
-                </div>
-              </div>
-              <h3 className="mt-8 text-xl font-medium text-slate-900">Analysiere Dokument...</h3>
-              <p className="mt-2 text-slate-500">Extrahiere Parameter und berechne System-Empfehlung.</p>
-              
-              {file && (
-                <div className="mt-6 flex items-center px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm text-sm text-slate-600">
-                  <FileText className="w-4 h-4 mr-2 text-slate-400" />
-                  {file.name}
-                </div>
-              )}
-            </motion.div>
+            <LoadingScreen fileName={file?.name || 'Dokument'} />
           )}
 
           {data && !isLoading && (
