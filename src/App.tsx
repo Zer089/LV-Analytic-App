@@ -59,9 +59,11 @@ export default function App() {
           universal: false
         },
         positions: [
-          { field: "Bemessungsstrom", quote: "Der Bemessungsstrom der Anlage beträgt 2000A.", page: 12 },
-          { field: "Schutzart", quote: "Die Schaltanlage ist in Schutzart IP30 auszuführen.", page: 15 },
-          { field: "Innere Form", quote: "Gefordert wird die innere Unterteilung Form 1.", page: 18 },
+          { field: "Bemessungsstrom", quote: "Der Bemessungsstrom der Anlage beträgt 2000A.", page: 122 },
+          { field: "Schutzart", quote: "Die Schaltanlage ist in Schutzart IP30 auszuführen.", page: 125 },
+          { field: "Innere Form", quote: "Form der inneren Unterteilung der Leistungsschalterfelder: Form 1", page: 128 },
+          { field: "Bemessungskurzzeitstrom", quote: "Bemessungskurzzeitstrom Icw(1 s) > 65 kA", page: 129 },
+          { field: "Bemessungsbetriebsspannung Ue", quote: "Bemessungsbetriebsspannung Ue: 400 V/50 Hz", page: 129 },
         ]
       });
       setIsLoading(false);
