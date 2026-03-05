@@ -38,6 +38,13 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
         extractedText = await readFileAsText(file, 'ISO-8859-1');
       }
     }
+
+    // Truncate text if it's extremely long to avoid token limits (approx 100k chars ~ 25k tokens)
+    // Most LVs are within this range. If longer, we take the first 100k.
+    if (extractedText.length > 100000) {
+      console.warn("Text too long, truncating to 100,000 characters to stay within quota limits.");
+      extractedText = extractedText.substring(0, 100000) + "... [Text gekürzt]";
+    }
     
     const parts = [
       {
@@ -124,22 +131,48 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
     };
 
     try {
-      response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: { parts },
-        config
-      });
-    } catch (error: any) {
-      if (error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota') || error?.message?.includes('rate limit')) {
-        console.warn("Rate limit reached for gemini-3-flash-preview, falling back to gemini-2.5-flash...");
-        response = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: { parts },
-          config
-        });
-      } else {
-        throw error;
+      // Helper for retrying with delay
+      const generateWithRetry = async (modelName: string, maxRetries = 2) => {
+        let lastError;
+        for (let i = 0; i <= maxRetries; i++) {
+          try {
+            return await ai.models.generateContent({
+              model: modelName,
+              contents: { parts },
+              config
+            });
+          } catch (error: any) {
+            lastError = error;
+            const isQuotaError = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota');
+            if (isQuotaError && i < maxRetries) {
+              const delay = (i + 1) * 2000; // 2s, 4s delay
+              console.warn(`Quota exceeded for ${modelName}, retrying in ${delay}ms... (Attempt ${i + 1}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            } else {
+              throw error;
+            }
+          }
+        }
+        throw lastError;
+      };
+
+      try {
+        response = await generateWithRetry("gemini-3-flash-preview");
+      } catch (error: any) {
+        const isQuotaError = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota');
+        if (isQuotaError) {
+          console.warn("Rate limit reached for gemini-3-flash-preview, falling back to gemini-1.5-flash...");
+          response = await generateWithRetry("gemini-1.5-flash");
+        } else {
+          throw error;
+        }
       }
+    } catch (error: any) {
+      console.error("Error in extractSwitchgearData:", error);
+      if (error?.message?.includes('quota') || error?.status === 429) {
+        throw new Error("Die KI-Quote wurde überschritten. Bitte warten Sie eine Minute und versuchen Sie es erneut.");
+      }
+      throw error;
     }
 
     console.log("Raw Gemini Response:", response.text);

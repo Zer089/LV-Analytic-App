@@ -7,22 +7,31 @@ interface LoadingScreenProps {
 }
 
 const steps = [
-  { text: "Dokument wird eingelesen...", duration: 1500 },
-  { text: "Textextraktion (OCR) wird durchgeführt...", duration: 2500 },
-  { text: "KI analysiert elektrotechnische Parameter...", duration: 3500 },
-  { text: "Spezielle Anforderungen werden identifiziert...", duration: 3000 },
-  { text: "System-Empfehlung wird berechnet...", duration: 2000 },
-  { text: "Ergebnisse werden finalisiert...", duration: 4000 }
+  { text: "Dokument wird eingelesen...", duration: 2000 },
+  { text: "Textextraktion (OCR) wird durchgeführt...", duration: 3000 },
+  { text: "KI analysiert elektrotechnische Parameter...", duration: 4000 },
+  { text: "Spezielle Anforderungen werden identifiziert...", duration: 3500 },
+  { text: "System-Empfehlung wird berechnet...", duration: 2500 },
+  { text: "Ergebnisse werden finalisiert...", duration: 4500 }
 ];
 
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ fileName }) => {
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentStep((prev) => (prev + 1) % steps.length);
-    }, 3000);
-    return () => clearInterval(interval);
+    // Sequential progress through steps, don't just loop randomly
+    const timeouts: NodeJS.Timeout[] = [];
+    let elapsed = 0;
+
+    steps.forEach((step, index) => {
+      const timeout = setTimeout(() => {
+        setCurrentStep(index);
+      }, elapsed);
+      timeouts.push(timeout);
+      elapsed += step.duration;
+    });
+
+    return () => timeouts.forEach(clearTimeout);
   }, []);
 
   return (
@@ -51,23 +60,38 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ fileName }) => {
             Laden Sie ein PDF oder eine GAEB-Datei hoch. Die KI extrahiert automatisch relevante Parameter für die NSHV-Auslegung.
           </p>
           
-          <div className="w-full bg-slate-100 rounded-full h-3 mb-8 overflow-hidden relative">
+          {/* Siemens "Stromimpuls" Loading Bar */}
+          <div className="w-full bg-slate-100 rounded-full h-4 mb-8 overflow-hidden relative border border-slate-200 shadow-inner">
+            {/* The "Current Pulse" - Sharp and fast */}
             <motion.div 
-              className="bg-gradient-to-r from-[#009999] via-[#00cccc] via-[#00ffff] via-[#00cccc] to-[#009999] h-full rounded-full absolute left-0 top-0 w-1/3 shadow-[0_0_15px_rgba(0,153,153,0.5)]"
+              className="h-full absolute left-0 top-0 w-32 bg-gradient-to-r from-transparent via-[#009999] via-[#00ffff] via-[#009999] to-transparent"
               animate={{ 
-                left: ["-33%", "100%"],
+                left: ["-30%", "130%"],
               }}
               transition={{ 
-                duration: 1.5,
+                duration: 1.0,
                 repeat: Infinity,
-                ease: "easeInOut"
+                ease: "linear"
               }}
             />
-            {/* AI Pulse Effect */}
+            {/* Secondary faster pulse for "electrical" feel */}
+            <motion.div 
+              className="h-full absolute left-0 top-0 w-16 bg-gradient-to-r from-transparent via-white to-transparent opacity-70"
+              animate={{ 
+                left: ["-20%", "120%"],
+              }}
+              transition={{ 
+                duration: 0.6,
+                repeat: Infinity,
+                ease: "linear",
+                delay: 0.1
+              }}
+            />
+            {/* Glow effect */}
             <motion.div 
               className="absolute inset-0 bg-[#009999]/10"
-              animate={{ opacity: [0.1, 0.4, 0.1] }}
-              transition={{ duration: 1, repeat: Infinity }}
+              animate={{ opacity: [0.05, 0.2, 0.05] }}
+              transition={{ duration: 0.4, repeat: Infinity }}
             />
           </div>
           

@@ -38,9 +38,9 @@ export const ChatBot: React.FC = () => {
       // Initialize inside handleSend to ensure fresh instance/key
       const aiInstance = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       
-      // Filter out messages to only include user and model roles for the API
-      // and ensure it starts with a 'user' message if possible, 
-      // or just send the current message with history context.
+      // Filter out messages and format for Gemini API
+      // Ensure history alternates user/model and starts with user if possible.
+      // Our greeting is 'model', so we might need to skip it or handle it.
       const history = messages
         .filter(m => m.role === 'user' || m.role === 'model')
         .map(m => ({
@@ -48,27 +48,47 @@ export const ChatBot: React.FC = () => {
           parts: [{ text: m.text }]
         }));
 
-      // Gemini API expects history to alternate user/model and usually start with user.
-      // If our first message is 'model' (the greeting), we might need to skip it or adjust.
-      // Let's just send the current message with history if it's valid.
-      
-      const response = await aiInstance.models.generateContent({
-        model: "gemini-3.1-pro-preview",
-        contents: [
-          ...history,
-          { role: 'user', parts: [{ text: userMessage }] }
-        ],
-        config: {
-          systemInstruction: "Du bist ein Experte für Siemens Niederspannungshauptverteilungen (NSHV), insbesondere für die Systeme SIVACON S8, ALPHA 3200 classic und ALPHA 3200 eco. Beantworte Fragen präzise, professionell und hilfreich. Wenn du Informationen über die Systeme benötigst: SIVACON S8 ist das High-End System bis 7000A, ALPHA 3200 classic bis 3200A für Standardanwendungen, und ALPHA 3200 eco ist die kostenoptimierte Lösung bis 3200A.",
-        },
-      });
+      // Helper for retrying with delay
+      const generateWithRetry = async (maxRetries = 2) => {
+        let lastError;
+        for (let i = 0; i <= maxRetries; i++) {
+          try {
+            return await aiInstance.models.generateContent({
+              model: "gemini-3-flash-preview",
+              contents: [
+                ...history,
+                { role: 'user', parts: [{ text: userMessage }] }
+              ],
+              config: {
+                systemInstruction: "Du bist ein Experte für Siemens Niederspannungshauptverteilungen (NSHV), insbesondere für die Systeme SIVACON S8, ALPHA 3200 classic und ALPHA 3200 eco. Beantworte Fragen präzise, professionell und hilfreich. Wenn du Informationen über die Systeme benötigst: SIVACON S8 ist das High-End System bis 7000A, ALPHA 3200 classic bis 3200A für Standardanwendungen, und ALPHA 3200 eco ist die kostenoptimierte Lösung bis 3200A.",
+              },
+            });
+          } catch (error: any) {
+            lastError = error;
+            const isQuotaError = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota');
+            if (isQuotaError && i < maxRetries) {
+              const delay = (i + 1) * 2000;
+              console.warn(`Chat quota exceeded, retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            } else {
+              throw error;
+            }
+          }
+        }
+        throw lastError;
+      };
 
+      const response = await generateWithRetry();
       const botResponse = response.text || "Entschuldigung, ich konnte keine Antwort generieren.";
       
       setMessages(prev => [...prev, { role: 'model', text: botResponse }]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Chat error:", error);
-      setMessages(prev => [...prev, { role: 'model', text: "Es gab einen Fehler bei der Verbindung zum KI-Dienst. Bitte versuchen Sie es später erneut." }]);
+      const isQuotaError = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota');
+      const errorMessage = isQuotaError 
+        ? "Die KI-Quote ist derzeit erschöpft. Bitte versuchen Sie es in einer Minute erneut."
+        : "Es gab einen Fehler bei der Verbindung zum KI-Dienst. Bitte versuchen Sie es später erneut.";
+      setMessages(prev => [...prev, { role: 'model', text: errorMessage }]);
     } finally {
       setIsLoading(false);
     }
