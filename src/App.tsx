@@ -37,34 +37,31 @@ export default function App() {
     // Simulate network delay
     setTimeout(() => {
       setData({
-        current: 4000,
-        icw: 100,
-        voltage: 690,
-        ip: "IP54",
-        form: "4b",
-        busbarPosition: "Oben",
-        uimp: 12,
+        current: 2000,
+        icw: 65,
+        voltage: 400,
+        ip: "IP30",
+        form: "1",
         ui: 1000,
-        ipk: 220,
+        ipk: 100,
         protectionClass: 1,
-        height: 2200,
+        height: 2000,
         base: 200,
         width: 800,
         depth: 800,
-        installationType: "Doppelfront",
+        installationType: "Wand",
         features: {
-          arcFault: true,
-          einschub: true,
+          arcFault: false,
+          einschub: false,
           mcc: false,
           nj63: false,
-          kompensation: true,
+          kompensation: false,
           universal: false
         },
         positions: [
-          { field: "Bemessungsstrom", quote: "Der Bemessungsstrom der Anlage beträgt 4000A.", page: 12 },
-          { field: "Schutzart", quote: "Die Schaltanlage ist in Schutzart IP54 auszuführen.", page: 15 },
-          { field: "Innere Form", quote: "Gefordert wird die innere Unterteilung Form 4b.", page: 18 },
-          { field: "Einschubtechnik", quote: "Alle Abgänge sind in Einschubtechnik auszuführen.", page: 22 }
+          { field: "Bemessungsstrom", quote: "Der Bemessungsstrom der Anlage beträgt 2000A.", page: 12 },
+          { field: "Schutzart", quote: "Die Schaltanlage ist in Schutzart IP30 auszuführen.", page: 15 },
+          { field: "Innere Form", quote: "Gefordert wird die innere Unterteilung Form 1.", page: 18 },
         ]
       });
       setIsLoading(false);
