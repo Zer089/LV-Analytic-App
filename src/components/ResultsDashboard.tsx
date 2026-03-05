@@ -29,13 +29,13 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
   }, [file]);
 
   const pdfSrc = useMemo(() => {
-    if (!pdfBaseUrl) return '';
+    if (!pdfBaseUrl) return null;
     let url = pdfBaseUrl;
     const params = [];
     if (pdfPage) params.push(`page=${pdfPage}`);
     if (searchQuery) {
-      // Some PDF viewers support search parameter
-      params.push(`search=${encodeURIComponent(searchQuery)}`);
+      // Standard PDF open parameters support search="phrase"
+      params.push(`search=${encodeURIComponent(`"${searchQuery}"`)}`);
     }
     
     if (params.length > 0) {
@@ -47,9 +47,9 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
   const handlePageClick = (page: number | undefined, quote: string) => {
     if (page) {
       setPdfPage(page);
-      // Optional: use quote for search if supported by the viewer
-      // Clean up the quote to improve search chances (remove punctuation, etc.)
-      const cleanQuote = quote.replace(/["']/g, '').trim();
+      // Clean up the quote to improve search chances
+      // Truncate to a reasonable length for URL parameters
+      const cleanQuote = quote.replace(/["']/g, '').trim().substring(0, 80);
       setSearchQuery(cleanQuote);
     }
   };
@@ -324,7 +324,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
             Leistungsverzeichnis (LV)
           </h3>
           <div className="flex-1 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center relative">
-            {file && file.type === 'application/pdf' ? (
+            {file && file.type === 'application/pdf' && pdfSrc ? (
               <iframe 
                 key={pdfSrc}
                 src={pdfSrc} 
