@@ -1,0 +1,5 @@
+{
+  "name": "LV Analytic App",
+  "description": "KI-gestütztes Tool zur Extraktion technischer Daten von Schaltanlagen aus Leistungsverzeichnissen (PDF/GAEB).",
+  "requestFramePermissions": []
+}
