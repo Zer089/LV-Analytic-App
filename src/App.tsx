@@ -78,7 +78,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-[#009999]/20 bg-[url('images/AI_bagground.png')] bg-cover bg-center bg-no-repeat bg-fixed">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-[#009999]/20 bg-[url('/images/AI_bagground.png')] bg-cover bg-center bg-no-repeat bg-fixed">
       {/* Header */}
       <header className="bg-[#009999] text-white sticky top-0 z-20 shadow-md">
         <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
