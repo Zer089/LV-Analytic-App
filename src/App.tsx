@@ -128,7 +128,7 @@ export default function App() {
                   Leistungsverzeichnis analysieren
                 </h2>
                 <p className="text-lg text-slate-600">
-                  Laden Sie ein PDF oder eine GAEB-Datei hoch. Die KI extrahiert elektrotechnische Parameter und empfiehlt das optimale NSHV-System.
+                  Laden Sie ein PDF oder eine GAEB-Datei hoch. Die KI extrahiert elektrotechnische Parameter und empfiehlt das optimale NSHV-System von Siemens.
                 </p>
               </div>
               
