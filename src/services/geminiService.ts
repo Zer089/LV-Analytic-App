@@ -25,7 +25,18 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
         throw new Error(`Fehler beim lokalen Auslesen der PDF-Datei: ${pdfError.message || 'Unbekannter Fehler'}`);
       }
     } else {
-      extractedText = await file.text();
+      try {
+        // GAEB files (.d83, .p83 etc) are often Windows-1252 (ANSI) encoded in Germany
+        const isGaebClassic = file.name.toLowerCase().endsWith('.d83') || file.name.toLowerCase().endsWith('.p83');
+        if (isGaebClassic) {
+          extractedText = await readFileAsText(file, 'ISO-8859-1');
+        } else {
+          extractedText = await file.text();
+        }
+      } catch (err) {
+        console.warn("UTF-8 reading failed, falling back to ISO-8859-1", err);
+        extractedText = await readFileAsText(file, 'ISO-8859-1');
+      }
     }
     
     const parts = [
@@ -174,6 +185,15 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
     console.error("Error in extractSwitchgearData:", error);
     throw error;
   }
+};
+
+const readFileAsText = (file: File, encoding: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsText(file, encoding);
+  });
 };
 
 const extractTextFromPdf = async (file: File): Promise<string> => {

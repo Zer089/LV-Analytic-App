@@ -7,12 +7,12 @@ interface LoadingScreenProps {
 }
 
 const steps = [
-  { text: "Dokument wird vorbereitet...", duration: 1000, targetProgress: 10 },
-  { text: "Textextraktion (OCR) läuft...", duration: 3000, targetProgress: 35 },
-  { text: "KI analysiert elektrotechnische Parameter...", duration: 4000, targetProgress: 65 },
-  { text: "Spezielle Anforderungen werden identifiziert...", duration: 3000, targetProgress: 80 },
-  { text: "System-Empfehlung wird berechnet...", duration: 2000, targetProgress: 90 },
-  { text: "Ergebnisse werden finalisiert...", duration: 10000, targetProgress: 99 } // Hangs here until actual completion
+  { text: "Dokument wird vorbereitet...", duration: 400, targetProgress: 15 },
+  { text: "Textextraktion läuft...", duration: 800, targetProgress: 40 },
+  { text: "KI analysiert Parameter...", duration: 1200, targetProgress: 70 },
+  { text: "Anforderungen werden identifiziert...", duration: 800, targetProgress: 85 },
+  { text: "System-Empfehlung wird berechnet...", duration: 600, targetProgress: 95 },
+  { text: "Ergebnisse werden finalisiert...", duration: 5000, targetProgress: 99 }
 ];
 
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ fileName }) => {
@@ -68,7 +68,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ fileName }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col items-center justify-center py-12"
+      className="flex-1 flex flex-col items-center justify-center min-h-[60vh] py-12"
     >
       <div className="bg-white/90 backdrop-blur-sm p-12 rounded-3xl shadow-xl border border-slate-100 max-w-2xl w-full text-center relative overflow-hidden">
         {/* Decorative background element */}

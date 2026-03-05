@@ -237,7 +237,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm xl:col-span-5 flex flex-col h-[800px]"
+          className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm xl:col-span-5 flex flex-col min-h-[500px] xl:h-[calc(100vh-280px)]"
         >
           <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center shrink-0">
             <CheckCircle2 className="w-5 h-5 mr-2 text-[#009999]" />
@@ -276,7 +276,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm xl:col-span-7 flex flex-col h-[800px]"
+          className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm xl:col-span-7 flex flex-col min-h-[500px] xl:h-[calc(100vh-280px)]"
         >
           <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center shrink-0">
             <FileText className="w-5 h-5 mr-2 text-slate-700" />

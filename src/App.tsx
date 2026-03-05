@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FileUpload } from './components/FileUpload';
 import { ResultsDashboard } from './components/ResultsDashboard';
 import { LoadingScreen } from './components/LoadingScreen';
+import { ChatBot } from './components/ChatBot';
 import { extractSwitchgearData } from './services/geminiService';
 import { SwitchgearData } from './types';
 import { Loader2, FileText, ArrowLeft, Settings, Activity } from 'lucide-react';
@@ -77,9 +78,15 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-[#009999]/20 bg-[url('/images/AI_bagground.png')] bg-cover bg-center bg-no-repeat bg-fixed">
-      {/* Header */}
-      <header className="bg-[#009999] text-white sticky top-0 z-20 shadow-md">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-[#009999]/20 relative">
+      {/* Background Image with Transparency */}
+      <div 
+        className="fixed inset-0 z-0 bg-[url('/images/AI_bagground.png')] bg-cover bg-center bg-no-repeat bg-fixed opacity-40 pointer-events-none"
+      />
+      
+      <div className="relative z-10 flex flex-col min-h-screen">
+        {/* Header */}
+        <header className="bg-[#009999] text-white sticky top-0 z-20 shadow-md">
         <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Siemens-like Logo Placeholder */}
@@ -90,7 +97,7 @@ export default function App() {
             <div className="hidden sm:flex flex-col">
               <h1 className="text-sm font-semibold tracking-wide flex items-center gap-2">
                 LV Analytic App
-                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.3.2</span>
+                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.4.0</span>
               </h1>
               <span className="text-[10px] text-white/80 uppercase tracking-wider">AI-Powered Extraction</span>
             </div>
@@ -110,7 +117,7 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 flex flex-col">
         <AnimatePresence mode="wait">
           {!data && !isLoading && (
             <motion.div 
@@ -180,6 +187,8 @@ export default function App() {
           )}
         </AnimatePresence>
       </main>
+      <ChatBot />
     </div>
+  </div>
   );
 }
