@@ -60,6 +60,8 @@ export default function App() {
           base: 200,
           width: 600,
           depth: 600,
+          busbarPosition: "oben",
+          uimp: 8,
           installationType: "Einfront",
           features: {
             arcFault: true,
@@ -115,7 +117,7 @@ export default function App() {
             <div className="hidden sm:flex flex-col">
               <h1 className="text-sm font-semibold tracking-wide flex items-center gap-2">
                 LV Analytic App
-                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.4.2</span>
+                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.4.3</span>
               </h1>
               <span className="text-[10px] text-white/80 uppercase tracking-wider">AI-Powered Extraction</span>
             </div>

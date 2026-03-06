@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageSquare, Send, X, Bot, User, Loader2, Sparkles } from 'lucide-react';
+import { MessageSquare, Send, X, Bot, User, Loader2, Sparkles, Maximize2, Minimize2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import ReactMarkdown from 'react-markdown';
 
 interface Message {
   role: 'user' | 'model';
@@ -14,6 +15,7 @@ interface ChatBotProps {
 
 export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
@@ -132,7 +134,11 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-[400px] max-w-[calc(100vw-48px)] h-[600px] max-h-[calc(100vh-120px)] flex flex-col overflow-hidden mb-4"
+            className={`bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden transition-all duration-300 ${
+              isMaximized 
+                ? 'fixed inset-6 w-auto h-auto z-[60] mb-0' 
+                : 'w-[500px] max-w-[calc(100vw-48px)] h-[750px] max-h-[calc(100vh-120px)] mb-4'
+            }`}
           >
             {/* Header */}
             <div className="bg-[#009999] p-4 text-white flex items-center justify-between">
@@ -148,12 +154,24 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
                   </div>
                 </div>
               </div>
-              <button 
-                onClick={() => setIsOpen(false)}
-                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={() => setIsMaximized(!isMaximized)}
+                  className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                  title={isMaximized ? "Verkleinern" : "Vergrößern"}
+                >
+                  {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </button>
+                <button 
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsMaximized(false);
+                  }}
+                  className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Messages */}
@@ -174,7 +192,9 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
                           : 'bg-white text-slate-700 border border-slate-100 rounded-bl-none'
                       }`}
                     >
-                      {msg.text}
+                      <div className="markdown-content">
+                        <ReactMarkdown>{msg.text}</ReactMarkdown>
+                      </div>
                     </div>
                   </div>
                 </div>
