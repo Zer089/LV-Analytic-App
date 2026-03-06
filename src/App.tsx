@@ -8,6 +8,8 @@ import { SwitchgearData } from './types';
 import { Loader2, FileText, ArrowLeft, Settings, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+import { generateTestPdf } from './utils/pdfGenerator';
+
 export default function App() {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,40 +37,47 @@ export default function App() {
     setIsLoading(true);
     setError(null);
     
+    // Generate the mock PDF file
+    const mockPdf = generateTestPdf();
+    setFile(mockPdf);
+    
     // Simulate network delay
     setTimeout(() => {
       setData({
         current: 2000,
         icw: 65,
         voltage: 400,
-        ip: "IP30",
-        form: "1",
+        ip: "IP40",
+        form: "4b",
         ui: 1000,
         ipk: 100,
         protectionClass: 1,
-        height: 2000,
+        height: 2200,
         base: 200,
-        width: 800,
-        depth: 800,
-        installationType: "Wand",
+        width: 600,
+        depth: 600,
+        installationType: "Einfront",
         features: {
-          arcFault: false,
-          einschub: false,
+          arcFault: true,
+          einschub: true,
           mcc: false,
           nj63: false,
           kompensation: false,
           universal: false
         },
         positions: [
-          { field: "Bemessungsstrom", quote: "Der Bemessungsstrom der Anlage beträgt 2000A.", page: 122 },
-          { field: "Schutzart", quote: "Die Schaltanlage ist in Schutzart IP30 auszuführen.", page: 125 },
-          { field: "Innere Form", quote: "Form der inneren Unterteilung der Leistungsschalterfelder: Form 1", page: 128 },
-          { field: "Bemessungskurzzeitstrom", quote: "Bemessungskurzzeitstrom Icw(1 s) > 65 kA", page: 129 },
-          { field: "Bemessungsbetriebsspannung Ue", quote: "Bemessungsbetriebsspannung Ue: 400 V/50 Hz", page: 129 },
+          { field: "Bemessungsstrom", quote: "Hauptsammelschienen: 2000 A", page: 17 },
+          { field: "Schutzart", quote: "Schutzart IP40", page: 14 },
+          { field: "Innere Form", quote: "Form der inneren Unterteilung der Leistungsschalterfelder: Form 4b", page: 17 },
+          { field: "Bemessungskurzzeitstrom", quote: "Bemessungskurzzeitstrom Icw(1 s) > 65 kA", page: 18 },
+          { field: "Bemessungsbetriebsspannung Ue", quote: "Bemessungsbetriebsspannung Ue: 400 V/50 Hz", page: 17 },
+          { field: "Störlichtbogenschutz", quote: "Das Sammelschienensystem ist mit Störlichtbogenbarrieren zur Begrenzung des Störlichtbogens auf das Feld auszurüsten.", page: 8 },
+          { field: "Einschubtechnik", quote: "Leistungsschalter in Einschubtechnik sind im Einschubrahmen auszuführen.", page: 11 },
+          { field: "Abmessungen", quote: "Höhe x Breite x Tiefe: 2200 x 600 x 600 mm", page: 18 },
         ]
       });
       setIsLoading(false);
-    }, 1000);
+    }, 1500);
   };
 
   const reset = () => {
