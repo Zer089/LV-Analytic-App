@@ -1,0 +1,45 @@
+{
+  "expertRole": "Experte für Siemens Niederspannungshauptverteilungen (NSHV)",
+  "systems": ["SIVACON S8", "ALPHA 3200 classic", "ALPHA 3200 eco"],
+  "recommendationLogic": {
+    "SIVACON_S8": {
+      "conditions": [
+        "Bemessungsstrom > 3200A",
+        "Kurzschlussfestigkeit > 75kA",
+        "Innere Unterteilung Form 2a, 3 oder 4",
+        "Schutzart IP43",
+        "Einschubtechnik oder Motor Control Center (MCC) gefordert",
+        "Sammelschienenlage oben",
+        "Stoßspannungsfestigkeit > 8kV",
+        "Stoßkurzschlussstrom > 165kA",
+        "Höhe > 2000mm",
+        "Aufstellart Doppelfront",
+        "Breite < 350mm"
+      ],
+      "description": "Hochleistungs-Schaltanlage für anspruchsvolle Industrieanwendungen."
+    },
+    "ALPHA_3200_classic": {
+      "conditions": [
+        "Spannung > 400V",
+        "Innere Unterteilung Form 2b",
+        "Schutzart IP40 oder IP41",
+        "Störlichtbogenschutz, Lasttrennschalter 3NJ63, Blindleistungskompensation oder Universaleinbautechnik gefordert",
+        "Sammelschienenlage hinten",
+        "Breite > 1100mm"
+      ],
+      "description": "Vielseitige Schaltanlage für Infrastruktur und Gebäude."
+    },
+    "ALPHA_3200_eco": {
+      "conditions": [
+        "Standardlösung für einfache Anwendungen bis 3200A",
+        "Keine der Bedingungen für S8 oder classic treffen zu"
+      ],
+      "description": "Wirtschaftliche Lösung für Standardanwendungen."
+    }
+  },
+  "generalKnowledge": [
+    "Niederspannungshauptverteilungen (NSHV) dienen der Energieverteilung in Gebäuden und Industrieanlagen.",
+    "SIVACON S8 bietet höchste Sicherheit durch typgeprüfte Standardmodule.",
+    "ALPHA 3200 Systeme sind optimiert für einfache Planung und Montage."
+  ]
+}

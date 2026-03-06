@@ -4,6 +4,8 @@ import { MessageSquare, Send, X, Bot, User, Loader2, Sparkles, Maximize2, Minimi
 import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
 
+import knowledgeBase from '../knowledge/siemens-nshv.json';
+
 interface Message {
   role: 'user' | 'model';
   text: string;
@@ -55,55 +57,52 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
       // Add context about the current analysis if available
       const analysisContext = data ? `\n\nAktuelle Analyse-Ergebnisse:\n${JSON.stringify(data, null, 2)}` : '';
 
-      // Helper for retrying with delay
+      // Helper for retrying with delay and model fallback
       const generateWithRetry = async (maxRetries = 2) => {
         let lastError;
-        for (let i = 0; i <= maxRetries; i++) {
-          try {
-            return await aiInstance.models.generateContent({
-              model: "gemini-3-flash-preview",
-              contents: [
-                ...history,
-                { role: 'user', parts: [{ text: userMessage + analysisContext }] }
-              ],
-              config: {
-                systemInstruction: `Du bist ein Experte für Siemens Niederspannungshauptverteilungen (NSHV), insbesondere für die Systeme SIVACON S8, ALPHA 3200 classic und ALPHA 3200 eco. 
-                Beantworte Fragen präzise, professionell und hilfreich auf Deutsch.
-                
-                Du hast Zugriff auf die aktuellen Analyse-Ergebnisse des Dashboards und sollst diese nutzen, um spezifische Fragen zum extrahierten Leistungsverzeichnis zu beantworten.
-                
-                Hier ist deine Tool-Logik zur Systemempfehlung:
-                - SIVACON S8 ist erforderlich, wenn:
-                  * Bemessungsstrom > 3200A
-                  * Kurzschlussfestigkeit > 75kA
-                  * Innere Unterteilung Form 2a, 3 oder 4
-                  * Schutzart IP43
-                  * Einschubtechnik oder Motor Control Center (MCC) gefordert
-                  * Sammelschienenlage oben
-                  * Stoßspannungsfestigkeit > 8kV
-                  * Stoßkurzschlussstrom > 165kA
-                  * Höhe > 2000mm
-                  * Aufstellart Doppelfront
-                  * Breite < 350mm
-                - ALPHA 3200 classic ist erforderlich (schließt eco aus), wenn:
-                  * Spannung > 400V
-                  * Innere Unterteilung Form 2b
-                  * Schutzart IP40 oder IP41
-                  * Störlichtbogenschutz, Lasttrennschalter 3NJ63, Blindleistungskompensation oder Universaleinbautechnik gefordert
-                  * Sammelschienenlage hinten
-                  * Breite > 1100mm
-                - ALPHA 3200 eco ist die Standardlösung für einfache Anwendungen bis 3200A, wenn keine der obigen Bedingungen für S8 oder classic zutreffen.`,
-              },
-            });
-          } catch (error: any) {
-            lastError = error;
-            const isQuotaError = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota');
-            if (isQuotaError && i < maxRetries) {
-              const delay = (i + 1) * 2000;
-              console.warn(`Chat quota exceeded, retrying in ${delay}ms...`);
-              await new Promise(resolve => setTimeout(resolve, delay));
-            } else {
-              throw error;
+        
+        // Try models in order: 3.1 Flash Lite (High Quota) -> 3 Flash (Better Reasoning)
+        const models = ["gemini-3.1-flash-lite-preview", "gemini-3-flash-preview"];
+        
+        for (const modelName of models) {
+          for (let i = 0; i <= maxRetries; i++) {
+            try {
+              return await aiInstance.models.generateContent({
+                model: modelName,
+                contents: [
+                  ...history,
+                  { role: 'user', parts: [{ text: userMessage + analysisContext }] }
+                ],
+                config: {
+                  systemInstruction: `Du bist ein ${knowledgeBase.expertRole}, insbesondere für die Systeme ${knowledgeBase.systems.join(', ')}. 
+                  Beantworte Fragen präzise, professionell und hilfreich auf Deutsch.
+                  
+                  Du hast Zugriff auf die aktuellen Analyse-Ergebnisse des Dashboards und sollst diese nutzen, um spezifische Fragen zum extrahierten Leistungsverzeichnis zu beantworten.
+                  
+                  Hier ist deine Tool-Logik zur Systemempfehlung:
+                  - SIVACON S8 ist erforderlich, wenn:
+                    ${knowledgeBase.recommendationLogic.SIVACON_S8.conditions.map(c => `* ${c}`).join('\n                    ')}
+                  - ALPHA 3200 classic ist erforderlich (schließt eco aus), wenn:
+                    ${knowledgeBase.recommendationLogic.ALPHA_3200_classic.conditions.map(c => `* ${c}`).join('\n                    ')}
+                  - ALPHA 3200 eco ist die Standardlösung für einfache Anwendungen bis 3200A, wenn keine der obigen Bedingungen für S8 oder classic zutreffen.
+                  
+                  Zusätzliches Wissen:
+                  ${knowledgeBase.generalKnowledge.map(k => `- ${k}`).join('\n                  ')}`,
+                },
+              });
+            } catch (error: any) {
+              lastError = error;
+              const isQuotaError = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota');
+              if (isQuotaError && i < maxRetries) {
+                const delay = (i + 1) * 2000;
+                console.warn(`Chat quota exceeded for ${modelName}, retrying in ${delay}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+              } else if (isQuotaError && i === maxRetries) {
+                console.warn(`Quota exhausted for ${modelName}, trying next model...`);
+                break; // Try next model in the list
+              } else {
+                throw error;
+              }
             }
           }
         }

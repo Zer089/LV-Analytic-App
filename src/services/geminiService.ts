@@ -157,12 +157,25 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
       };
 
       try {
+        // Try with Gemini 3 Flash first (Best for complex extraction)
         response = await generateWithRetry("gemini-3-flash-preview");
       } catch (error: any) {
         const isQuotaError = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota');
         if (isQuotaError) {
-          console.warn("Rate limit reached for gemini-3-flash-preview, falling back to gemini-1.5-flash...");
-          response = await generateWithRetry("gemini-1.5-flash");
+          console.warn("Rate limit reached for gemini-3-flash-preview, falling back to gemini-2.5-flash-latest...");
+          try {
+            // Fallback 1: Gemini 2.5 Flash
+            response = await generateWithRetry("gemini-2.5-flash-latest");
+          } catch (fallbackError: any) {
+            const isQuotaError2 = fallbackError?.status === 429 || fallbackError?.message?.includes('429') || fallbackError?.message?.includes('quota');
+            if (isQuotaError2) {
+              console.warn("Rate limit reached for gemini-2.5-flash-latest, falling back to gemini-3.1-flash-lite-preview (High Quota)...");
+              // Fallback 2: Gemini 3.1 Flash Lite (500 RPD)
+              response = await generateWithRetry("gemini-3.1-flash-lite-preview");
+            } else {
+              throw fallbackError;
+            }
+          }
         } else {
           throw error;
         }
