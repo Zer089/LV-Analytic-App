@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Lock, Save, Plus, Trash2, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface SettingsModalProps {
 const ADMIN_PASSWORD = "SiemensAI2026";
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+  const { language, t } = useLanguage();
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState('');
@@ -39,7 +41,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       setIsAuthenticated(true);
       setError('');
     } else {
-      setError('Ungültiges Passwort');
+      setError(language === 'de' ? 'Ungültiges Passwort' : 'Invalid password');
     }
   };
 
@@ -52,10 +54,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
         body: JSON.stringify(knowledge),
       });
       if (response.ok) {
-        alert('Wissensbasis erfolgreich aktualisiert!');
+        alert(language === 'de' ? 'Wissensbasis erfolgreich aktualisiert!' : 'Knowledge base successfully updated!');
       }
     } catch (err) {
-      alert('Fehler beim Speichern der Wissensbasis');
+      alert(language === 'de' ? 'Fehler beim Speichern der Wissensbasis' : 'Error saving knowledge base');
     } finally {
       setIsSaving(false);
     }
@@ -92,8 +94,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               <Lock className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold">Admin-Einstellungen</h2>
-              <p className="text-xs text-white/60">Wissensbasis & Konfiguration</p>
+              <h2 className="text-xl font-bold">{t.settings.adminTitle}</h2>
+              <p className="text-xs text-white/60">{t.settings.adminSubtitle}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
@@ -107,15 +109,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Lock className="w-8 h-8 text-zinc-400" />
               </div>
-              <h3 className="text-lg font-semibold mb-2">Passwort erforderlich</h3>
-              <p className="text-sm text-gray-500 mb-6">Dies ist ein geschützter Bereich. Bitte geben Sie das Admin-Passwort ein.</p>
+              <h3 className="text-lg font-semibold mb-2">{t.settings.passwordRequired}</h3>
+              <p className="text-sm text-gray-500 mb-6">{t.settings.adminOnly}</p>
               
               <form onSubmit={handleLogin} className="space-y-4">
                 <input 
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Passwort eingeben"
+                  placeholder={t.settings.passwordPlaceholder}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-zinc-900 focus:border-transparent outline-none transition-all"
                   autoFocus
                 />
@@ -124,7 +126,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   type="submit"
                   className="w-full bg-zinc-900 text-white py-3 rounded-xl font-semibold hover:bg-zinc-800 transition-all"
                 >
-                  Anmelden
+                  {t.settings.login}
                 </button>
               </form>
             </div>
@@ -135,10 +137,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                   <section>
                     <div className="flex items-center gap-2 mb-4">
                       <BookOpen className="w-5 h-5 text-zinc-900" />
-                      <h3 className="font-bold text-lg">Lernfunktion: Allgemeines Wissen</h3>
+                      <h3 className="font-bold text-lg">{t.settings.knowledgeTitle}</h3>
                     </div>
                     <p className="text-sm text-gray-500 mb-4">
-                      Erweitern Sie das Wissen des Chatbots durch zusätzliche Vorgaben und Fakten.
+                      {t.settings.knowledgeSubtitle}
                     </p>
                     
                     <div className="space-y-3 mb-4">
@@ -160,7 +162,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                         type="text"
                         value={newGeneralFact}
                         onChange={(e) => setNewGeneralFact(e.target.value)}
-                        placeholder="Neues Wissen hinzufügen..."
+                        placeholder={t.settings.addKnowledgePlaceholder}
                         className="flex-1 px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-zinc-900 outline-none text-sm"
                         onKeyPress={(e) => e.key === 'Enter' && addGeneralFact()}
                       />
@@ -180,12 +182,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
                       className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all disabled:opacity-50"
                     >
                       <Save className="w-5 h-5" />
-                      {isSaving ? 'Speichert...' : 'Wissensbasis speichern'}
+                      {isSaving ? (language === 'de' ? 'Speichert...' : 'Saving...') : t.settings.saveKnowledge}
                     </button>
                   </div>
                 </>
               ) : (
-                <div className="py-12 text-center text-gray-400">Lade Wissensbasis...</div>
+                <div className="py-12 text-center text-gray-400">{language === 'de' ? 'Lade Wissensbasis...' : 'Loading knowledge base...'}</div>
               )}
             </div>
           )}

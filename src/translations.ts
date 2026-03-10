@@ -1,0 +1,139 @@
+
+export type Language = 'de' | 'en';
+
+export const translations = {
+  de: {
+    header: {
+      title: 'LV Analytic App',
+      subtitle: 'KI-Tool zur Projektierungsunterstützung von NSHVs',
+      newAnalysis: 'Neue Analyse',
+      settings: 'Einstellungen',
+    },
+    upload: {
+      title: 'Leistungsverzeichnis analysieren',
+      description: 'Laden Sie ein PDF oder eine GAEB-Datei hoch. Die KI extrahiert elektrotechnische Parameter und empfiehlt das optimale NSHV-System von Siemens.',
+      simulate: 'Analyse simulieren (Test)',
+      dropzoneTitle: 'PDF oder GAEB Datei hochladen',
+      dropzoneSubtitle: 'Klicken oder Datei per Drag & Drop hineinziehen (.pdf, .d83, .x83)',
+      dropzoneActive: 'Datei hier ablegen...',
+      error: 'Fehler',
+      simulationFailed: 'Simulation fehlgeschlagen',
+    },
+    results: {
+      analyzed: 'Erfolgreich analysiert',
+      document: 'Dokument',
+    },
+    loading: {
+      title: 'LV Analyse läuft...',
+      subtitle: 'Laden Sie ein PDF oder eine GAEB-Datei hoch. Die KI extrahiert automatisch relevante Parameter für die NSHV-Auslegung.',
+      analyzingFile: 'Analysiere "{fileName}"...',
+      steps: [
+        "Dokument wird eingelesen...",
+        "Textextraktion (OCR) wird durchgeführt...",
+        "KI analysiert elektrotechnische Parameter...",
+        "Spezielle Anforderungen werden identifiziert...",
+        "System-Empfehlung wird berechnet...",
+        "Ergebnisse werden finalisiert..."
+      ],
+      analyzing: 'Analysiere Leistungsverzeichnis...',
+      extracting: 'Extrahiere Parameter...',
+      findingSystem: 'Suche optimales System...',
+      pleaseWait: 'Bitte warten Sie einen Moment.',
+    },
+    chatbot: {
+      placeholder: 'Fragen zum LV oder System stellen...',
+      welcome: 'Hallo! Ich bin Ihr Siemens NSHV-Experte. Wie kann ich Ihnen heute helfen?',
+      online: 'Online',
+      minimize: 'Verkleinern',
+      maximize: 'Vergrößern',
+      askSomething: 'Fragen Sie etwas...',
+      expertName: 'Siemens NSHV Experte',
+      quotaError: 'Die KI-Quote ist derzeit erschöpft. Bitte versuchen Sie es in einer Minute erneut.',
+      connectionError: 'Es gab einen Fehler bei der Verbindung zum KI-Dienst. Bitte versuchen Sie es später erneut.',
+      noResponse: 'Entschuldigung, ich konnte keine Antwort generieren.',
+    },
+    settings: {
+      title: 'Einstellungen',
+      model: 'KI-Modell',
+      apiKey: 'Gemini API-Key',
+      save: 'Speichern',
+      close: 'Schließen',
+    },
+    dashboard: {
+      parameters: 'Extrahierte Parameter',
+      recommendation: 'Systemempfehlung',
+      evidence: 'Belegstellen im Dokument',
+      field: 'Feld',
+      value: 'Wert',
+      page: 'Seite',
+      quote: 'Zitat',
+    }
+  },
+  en: {
+    header: {
+      title: 'LV Analytic App',
+      subtitle: 'AI tool for project planning support of low-voltage switchgear',
+      newAnalysis: 'New Analysis',
+      settings: 'Settings',
+    },
+    upload: {
+      title: 'Analyze Bill of Quantities',
+      description: 'Upload a PDF or GAEB file. The AI extracts electrotechnical parameters and recommends the optimal Siemens low-voltage switchgear system.',
+      simulate: 'Simulate Analysis (Test)',
+      dropzoneTitle: 'Upload PDF or GAEB file',
+      dropzoneSubtitle: 'Click or drag & drop file here (.pdf, .d83, .x83)',
+      dropzoneActive: 'Drop file here...',
+      error: 'Error',
+      simulationFailed: 'Simulation failed',
+    },
+    results: {
+      analyzed: 'Successfully analyzed',
+      document: 'Document',
+    },
+    loading: {
+      title: 'LV Analysis in progress...',
+      subtitle: 'Upload a PDF or GAEB file. The AI automatically extracts relevant parameters for the switchgear design.',
+      analyzingFile: 'Analyzing "{fileName}"...',
+      steps: [
+        "Reading document...",
+        "Text extraction (OCR) in progress...",
+        "AI analyzing electrotechnical parameters...",
+        "Special requirements being identified...",
+        "System recommendation being calculated...",
+        "Finalizing results..."
+      ],
+      analyzing: 'Analyzing bill of quantities...',
+      extracting: 'Extracting parameters...',
+      findingSystem: 'Finding optimal system...',
+      pleaseWait: 'Please wait a moment.',
+    },
+    chatbot: {
+      placeholder: 'Ask questions about the BoQ or system...',
+      welcome: 'Hello! I am your Siemens low-voltage switchgear expert. How can I help you today?',
+      online: 'Online',
+      minimize: 'Minimize',
+      maximize: 'Maximize',
+      askSomething: 'Ask something...',
+      expertName: 'Siemens Switchgear Expert',
+      quotaError: 'The AI quota is currently exhausted. Please try again in a minute.',
+      connectionError: 'There was an error connecting to the AI service. Please try again later.',
+      noResponse: 'Sorry, I could not generate a response.',
+    },
+    settings: {
+      title: 'Settings',
+      model: 'AI Model',
+      apiKey: 'Gemini API Key',
+      save: 'Save',
+      close: 'Close',
+    },
+    dashboard: {
+      parameters: 'Extracted Parameters',
+      recommendation: 'System Recommendation',
+      evidence: 'Evidence in Document',
+      field: 'Field',
+      value: 'Value',
+      page: 'Page',
+      quote: 'Quote',
+    }
+  }
+};

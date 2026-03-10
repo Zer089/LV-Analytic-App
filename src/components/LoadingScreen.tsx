@@ -1,29 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Sparkles } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface LoadingScreenProps {
   fileName: string;
 }
 
-const steps = [
-  { text: "Dokument wird eingelesen...", duration: 2000 },
-  { text: "Textextraktion (OCR) wird durchgeführt...", duration: 3000 },
-  { text: "KI analysiert elektrotechnische Parameter...", duration: 4000 },
-  { text: "Spezielle Anforderungen werden identifiziert...", duration: 3500 },
-  { text: "System-Empfehlung wird berechnet...", duration: 2500 },
-  { text: "Ergebnisse werden finalisiert...", duration: 4500 }
-];
-
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ fileName }) => {
+  const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(0);
 
+  const steps = t.loading.steps.map((text: string) => ({
+    text,
+    duration: 3000 // Approximate duration
+  }));
+
   useEffect(() => {
-    // Sequential progress through steps, don't just loop randomly
+    // Sequential progress through steps
     const timeouts: NodeJS.Timeout[] = [];
     let elapsed = 0;
 
-    steps.forEach((step, index) => {
+    steps.forEach((step: any, index: number) => {
       const timeout = setTimeout(() => {
         setCurrentStep(index);
       }, elapsed);
@@ -32,7 +30,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ fileName }) => {
     });
 
     return () => timeouts.forEach(clearTimeout);
-  }, []);
+  }, [steps]);
 
   return (
     <motion.div 
@@ -53,11 +51,11 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ fileName }) => {
           </div>
           
           <h2 className="text-3xl font-bold text-slate-900 mb-4">
-            LV Analyse läuft...
+            {t.loading.title}
           </h2>
           
           <p className="text-lg text-slate-600 mb-12">
-            Laden Sie ein PDF oder eine GAEB-Datei hoch. Die KI extrahiert automatisch relevante Parameter für die NSHV-Auslegung.
+            {t.loading.subtitle}
           </p>
           
           {/* Siemens "Stromimpuls" Loading Bar */}
@@ -97,10 +95,10 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ fileName }) => {
           
           <div className="flex flex-col items-center justify-center space-y-2">
             <p className="text-sm font-medium text-[#009999] animate-pulse">
-              {steps[currentStep].text}
+              {steps[currentStep]?.text}
             </p>
             <p className="text-xs text-slate-400">
-              Analysiere "{fileName}"...
+              {t.loading.analyzingFile.replace('{fileName}', fileName)}
             </p>
           </div>
         </div>

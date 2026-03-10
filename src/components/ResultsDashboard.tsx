@@ -7,6 +7,7 @@ import {
   AlertCircle, Box, Activity, Hash, Settings, ChevronRight, ListChecks
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface ResultsDashboardProps {
   initialData: SwitchgearData;
@@ -14,6 +15,7 @@ interface ResultsDashboardProps {
 }
 
 export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData, file }) => {
+  const { language, t } = useLanguage();
   const [data, setData] = useState<SwitchgearData>(initialData);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pdfPage, setPdfPage] = useState<number | null>(null);
@@ -54,7 +56,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
     }
   };
 
-  const evaluation = evaluateSystem(data);
+  const evaluation = evaluateSystem(data, language);
 
   const isModified = JSON.stringify(data) !== JSON.stringify(initialData);
 
@@ -65,36 +67,36 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
   };
 
   const fieldLabelMap: Record<string, string> = {
-    'current': 'Bemessungsstrom (In)',
-    'bemessungsstrom': 'Bemessungsstrom (In)',
-    'icw': 'Kurzschlussstrom (Icw)',
-    'kurzschlussstrom': 'Kurzschlussstrom (Icw)',
-    'voltage': 'Spannung (Ue)',
-    'spannung': 'Spannung (Ue)',
-    'ip': 'Schutzart (IP)',
-    'schutzart': 'Schutzart (IP)',
-    'form': 'Innere Form',
-    'innere form': 'Innere Form',
-    'arcFault': 'Störlichtbogenschutz',
-    'störlichtbogen': 'Störlichtbogenschutz',
-    'einschub': 'Einschubtechnik',
-    'einschubtechnik': 'Einschubtechnik',
+    'current': language === 'de' ? 'Bemessungsstrom (In)' : 'Rated current (In)',
+    'bemessungsstrom': language === 'de' ? 'Bemessungsstrom (In)' : 'Rated current (In)',
+    'icw': language === 'de' ? 'Kurzschlussstrom (Icw)' : 'Short-circuit current (Icw)',
+    'kurzschlussstrom': language === 'de' ? 'Kurzschlussstrom (Icw)' : 'Short-circuit current (Icw)',
+    'voltage': language === 'de' ? 'Spannung (Ue)' : 'Voltage (Ue)',
+    'spannung': language === 'de' ? 'Spannung (Ue)' : 'Voltage (Ue)',
+    'ip': language === 'de' ? 'Schutzart (IP)' : 'Protection class (IP)',
+    'schutzart': language === 'de' ? 'Schutzart (IP)' : 'Protection class (IP)',
+    'form': language === 'de' ? 'Innere Form' : 'Internal form',
+    'innere form': language === 'de' ? 'Innere Form' : 'Internal form',
+    'arcFault': language === 'de' ? 'Störlichtbogenschutz' : 'Arc fault protection',
+    'störlichtbogen': language === 'de' ? 'Störlichtbogenschutz' : 'Arc fault protection',
+    'einschub': language === 'de' ? 'Einschubtechnik' : 'Withdrawable technology',
+    'einschubtechnik': language === 'de' ? 'Einschubtechnik' : 'Withdrawable technology',
     'mcc': 'Motor Control Center (MCC)',
-    'nj63': 'Lasttrennschalter (3NJ63)',
-    'kompensation': 'Blindleistungskompensation',
-    'universal': 'Universaleinbautechnik',
-    'busbarPosition': 'Sammelschienenlage',
-    'sammelschienenlage': 'Sammelschienenlage',
-    'uimp': 'Stoßspannungsfestigkeit (Uimp)',
-    'ui': 'Isolationsspannung (Ui)',
-    'ipk': 'Stoßkurzschlussstrom (Ipk)',
-    'protectionClass': 'Schutzklasse',
-    'schutzklasse': 'Schutzklasse',
-    'height': 'Höhe',
-    'base': 'Sockel',
-    'width': 'Breite',
-    'depth': 'Tiefe',
-    'installationType': 'Aufstellart'
+    'nj63': language === 'de' ? 'Lasttrennschalter (3NJ63)' : 'Switch disconnector (3NJ63)',
+    'kompensation': language === 'de' ? 'Blindleistungskompensation' : 'Reactive power compensation',
+    'universal': language === 'de' ? 'Universaleinbautechnik' : 'Universal mounting technology',
+    'busbarPosition': language === 'de' ? 'Sammelschienenlage' : 'Busbar position',
+    'sammelschienenlage': language === 'de' ? 'Sammelschienenlage' : 'Busbar position',
+    'uimp': language === 'de' ? 'Stoßspannungsfestigkeit (Uimp)' : 'Impulse withstand voltage (Uimp)',
+    'ui': language === 'de' ? 'Isolationsspannung (Ui)' : 'Insulation voltage (Ui)',
+    'ipk': language === 'de' ? 'Stoßkurzschlussstrom (Ipk)' : 'Peak withstand current (Ipk)',
+    'protectionClass': language === 'de' ? 'Schutzklasse' : 'Protection class',
+    'schutzklasse': language === 'de' ? 'Schutzklasse' : 'Protection class',
+    'height': language === 'de' ? 'Höhe' : 'Height',
+    'base': language === 'de' ? 'Sockel' : 'Base',
+    'width': language === 'de' ? 'Breite' : 'Width',
+    'depth': language === 'de' ? 'Tiefe' : 'Depth',
+    'installationType': language === 'de' ? 'Aufstellart' : 'Installation type'
   };
 
   const getFieldLabel = (field: string) => {
@@ -152,36 +154,36 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-slate-900 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[#009999] mr-2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" x2="9" y1="1" y2="4"></line><line x1="15" x2="15" y1="1" y2="4"></line><line x1="9" x2="9" y1="20" y2="23"></line><line x1="15" x2="15" y1="20" y2="23"></line><line x1="20" x2="23" y1="9" y2="9"></line><line x1="20" x2="23" y1="14" y2="14"></line><line x1="1" x2="4" y1="9" y2="9"></line><line x1="1" x2="4" y1="14" y2="14"></line></svg>
-              Erkannte Anforderungen NSHV
+              {language === 'de' ? 'Erkannte Anforderungen NSHV' : 'Detected Switchgear Requirements'}
             </h3>
             {isModified && (
               <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-1 rounded-full border border-yellow-200">
-                manuelle Änderungen aktiv
+                {language === 'de' ? 'manuelle Änderungen aktiv' : 'manual changes active'}
               </span>
             )}
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
-            {renderCard(<>Bemessungsstrom (I<sub>n</sub>)</>, data.current, 'A', <Activity className="w-5 h-5" />, 0.1)}
-            {renderCard(<>Kurzschlussstrom (I<sub>cw</sub>)</>, data.icw, 'kA', <AlertCircle className="w-5 h-5" />, 0.2)}
-            {renderCard(<>Spannung (U<sub>e</sub>)</>, data.voltage, 'V', <Zap className="w-5 h-5" />, 0.3)}
-            {renderCard('Schutzart (IP)', data.ip, '', <Shield className="w-5 h-5" />, 0.4)}
-            {renderCard('Innere Form', data.form, '', <Box className="w-5 h-5" />, 0.5)}
+            {renderCard(<> {language === 'de' ? 'Bemessungsstrom' : 'Rated current'} (I<sub>n</sub>)</>, data.current, 'A', <Activity className="w-5 h-5" />, 0.1)}
+            {renderCard(<> {language === 'de' ? 'Kurzschlussstrom' : 'Short-circuit current'} (I<sub>cw</sub>)</>, data.icw, 'kA', <AlertCircle className="w-5 h-5" />, 0.2)}
+            {renderCard(<> {language === 'de' ? 'Spannung' : 'Voltage'} (U<sub>e</sub>)</>, data.voltage, 'V', <Zap className="w-5 h-5" />, 0.3)}
+            {renderCard(language === 'de' ? 'Schutzart (IP)' : 'Protection class (IP)', data.ip, '', <Shield className="w-5 h-5" />, 0.4)}
+            {renderCard(language === 'de' ? 'Innere Form' : 'Internal form', data.form, '', <Box className="w-5 h-5" />, 0.5)}
           </div>
 
           <div className="pt-6 border-t border-slate-100 mt-auto">
             <div className="flex items-center mb-4">
               <ListChecks className="w-5 h-5 mr-2 text-slate-700" />
-              <h4 className="text-base font-semibold text-slate-900">Spezielle Anforderungen</h4>
+              <h4 className="text-base font-semibold text-slate-900">{language === 'de' ? 'Spezielle Anforderungen' : 'Special Requirements'}</h4>
             </div>
             <div className="flex flex-wrap gap-2">
               {[
-                { key: 'arcFault', label: 'Störlichtbogenschutz' },
-                { key: 'einschub', label: 'Einschubtechnik' },
+                { key: 'arcFault', label: language === 'de' ? 'Störlichtbogenschutz' : 'Arc fault protection' },
+                { key: 'einschub', label: language === 'de' ? 'Einschubtechnik' : 'Withdrawable technology' },
                 { key: 'mcc', label: 'Motor Controll Center (MCC)' },
-                { key: 'nj63', label: 'Lasttrennschalter mit Sicherungen (3NJ63)' },
-                { key: 'kompensation', label: 'Blindleistungskompensation' },
-                { key: 'universal', label: 'Universaleinbautechnik' }
+                { key: 'nj63', label: language === 'de' ? 'Lasttrennschalter mit Sicherungen (3NJ63)' : 'Switch disconnectors with fuses (3NJ63)' },
+                { key: 'kompensation', label: language === 'de' ? 'Blindleistungskompensation' : 'Reactive power compensation' },
+                { key: 'universal', label: language === 'de' ? 'Universaleinbautechnik' : 'Universal mounting technology' }
               ]
               .filter(({ key }) => data.features[key as keyof typeof data.features])
               .map(({ key, label }) => (
@@ -195,7 +197,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
               
               {Object.values(data.features).every(v => !v) && (
                 <span className="text-sm text-slate-500 italic p-3 bg-slate-50 rounded-xl border border-slate-100 w-full">
-                  Keine speziellen Anforderungen gefunden.
+                  {language === 'de' ? 'Keine speziellen Anforderungen gefunden.' : 'No special requirements found.'}
                 </span>
               )}
             </div>
@@ -219,7 +221,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
                   {evaluation.system}
                 </h2>
                 <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold bg-[#009999]/20 text-[#00cccc] border border-[#009999]/30">
-                  System-Empfehlung
+                  {t.dashboard.recommendation}
                 </span>
               </div>
               
@@ -242,21 +244,21 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
                     className="w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors flex items-center justify-center border border-white/10 text-sm"
                   >
                     <Settings className="w-4 h-4 mr-2" />
-                    Konfiguration anpassen
+                    {language === 'de' ? 'Konfiguration anpassen' : 'Adjust configuration'}
                   </button>
                   {isModified && (
                     <button 
                       onClick={() => setData(initialData)}
                       className="w-full py-2.5 px-4 bg-transparent hover:bg-white/5 text-slate-300 rounded-xl font-medium transition-colors flex items-center justify-center border border-slate-600 text-sm"
                     >
-                      Zurücksetzen
+                      {language === 'de' ? 'Zurücksetzen' : 'Reset'}
                     </button>
                   )}
                 </div>
                 
                 {/* Ausschluss-Logik */}
                 <div className="w-full sm:w-3/5 flex flex-col">
-                  <h4 className="text-sm font-medium text-slate-400 mb-3 uppercase tracking-wider">Ausschluss-Logik</h4>
+                  <h4 className="text-sm font-medium text-slate-400 mb-3 uppercase tracking-wider">{language === 'de' ? 'Ausschluss-Logik' : 'Exclusion Logic'}</h4>
                   <ul className="space-y-3 overflow-y-auto pr-2 custom-scrollbar max-h-[350px]">
                     {evaluation.reasons.map((reason, idx) => (
                       <li key={idx} className="flex items-start text-sm text-slate-300">
@@ -283,7 +285,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
         >
           <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center shrink-0">
             <CheckCircle2 className="w-5 h-5 mr-2 text-[#009999]" />
-            Belegstellen (KI-Extraktion)
+            {t.dashboard.evidence}
           </h3>
           <div className="overflow-y-auto flex-1 pr-2 custom-scrollbar">
             {data.positions && data.positions.length > 0 ? (
@@ -297,7 +299,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
                           onClick={() => handlePageClick(pos.page, pos.quote)}
                           className="text-xs font-medium bg-white hover:bg-slate-50 px-2 py-1 rounded-md text-slate-500 hover:text-[#009999] border border-slate-200 shadow-sm transition-colors cursor-pointer"
                         >
-                          Seite {pos.page}
+                          {t.dashboard.page} {pos.page}
                         </button>
                       )}
                     </div>
@@ -307,7 +309,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
               </ul>
             ) : (
               <p className="text-sm text-slate-500 italic p-4 bg-slate-50 rounded-xl border border-slate-100">
-                Keine spezifischen Textstellen als Beleg gefunden.
+                {language === 'de' ? 'Keine spezifischen Textstellen als Beleg gefunden.' : 'No specific text passages found as evidence.'}
               </p>
             )}
           </div>
@@ -322,7 +324,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
         >
           <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center shrink-0">
             <FileText className="w-5 h-5 mr-2 text-slate-700" />
-            Leistungsverzeichnis (LV)
+            {language === 'de' ? 'Leistungsverzeichnis (LV)' : 'Bill of Quantities (BoQ)'}
           </h3>
           <div className="flex-1 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center relative">
             {file && file.type === 'application/pdf' && pdfSrc ? (
@@ -335,9 +337,9 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
             ) : (
               <div className="text-center p-8">
                 <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500 font-medium">Vorschau nicht verfügbar</p>
+                <p className="text-slate-500 font-medium">{language === 'de' ? 'Vorschau nicht verfügbar' : 'Preview not available'}</p>
                 <p className="text-slate-400 text-sm mt-1">
-                  {file ? 'Nur PDF-Dateien können hier angezeigt werden.' : 'Kein Dokument hochgeladen.'}
+                  {file ? (language === 'de' ? 'Nur PDF-Dateien können hier angezeigt werden.' : 'Only PDF files can be displayed here.') : (language === 'de' ? 'Kein Dokument hochgeladen.' : 'No document uploaded.')}
                 </p>
               </div>
             )}

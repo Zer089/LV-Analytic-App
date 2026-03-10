@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { UploadCloud, FileText, File as FileIcon } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
@@ -8,6 +9,7 @@ interface FileUploadProps {
 }
 
 export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isLoading }) => {
+  const { t } = useLanguage();
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
       onFileSelect(acceptedFiles[0]);
@@ -41,10 +43,10 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onFileSelect, isLoading 
         </div>
         <div>
           <p className="text-lg font-medium text-slate-700">
-            {isDragActive ? 'Datei hier ablegen...' : 'PDF oder GAEB Datei hochladen'}
+            {isDragActive ? t.upload.dropzoneActive : t.upload.dropzoneTitle}
           </p>
           <p className="text-sm text-slate-500 mt-1">
-            Klicken oder Datei per Drag & Drop hineinziehen (.pdf, .d83, .x83)
+            {t.upload.dropzoneSubtitle}
           </p>
         </div>
         

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, Send, X, Bot, User, Loader2, Sparkles, Maximize2, Minimize2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Message {
   role: 'user' | 'model';
@@ -14,16 +15,24 @@ interface ChatBotProps {
 }
 
 export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
+  const { language, t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', text: 'Hallo! Ich bin Ihr Siemens NSHV-Experte. Wie kann ich Ihnen heute helfen?' }
+    { role: 'model', text: t.chatbot.welcome }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentKnowledge, setCurrentKnowledge] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Update initial message when language changes
+  useEffect(() => {
+    if (messages.length === 1 && messages[0].role === 'model') {
+      setMessages([{ role: 'model', text: t.chatbot.welcome }]);
+    }
+  }, [language]);
 
   useEffect(() => {
     fetch('/api/knowledge')
@@ -61,7 +70,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
         }));
 
       // Add context about the current analysis if available
-      const analysisContext = data ? `\n\nAktuelle Analyse-Ergebnisse:\n${JSON.stringify(data, null, 2)}` : '';
+      const analysisContext = data ? `\n\n${language === 'de' ? 'Aktuelle Analyse-Ergebnisse' : 'Current analysis results'}:\n${JSON.stringify(data, null, 2)}` : '';
 
       // Helper for retrying with delay and model fallback
       const generateWithRetry = async (maxRetries = 2) => {
@@ -71,7 +80,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
         const models = ["gemini-3.1-flash-lite-preview", "gemini-3-flash-preview"];
         
         const kb = currentKnowledge || { 
-          expertRole: "Experte für Siemens Niederspannungshauptverteilungen (NSHV)",
+          expertRole: language === 'de' ? "Experte für Siemens Niederspannungshauptverteilungen (NSHV)" : "Expert for Siemens low-voltage switchgear (NSHV)",
           systems: ["SIVACON S8", "ALPHA 3200 classic", "ALPHA 3200 eco"],
           recommendationLogic: { SIVACON_S8: { conditions: [] }, ALPHA_3200_classic: { conditions: [] } },
           generalKnowledge: []
@@ -88,7 +97,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
                 ],
                 config: {
                   systemInstruction: `Du bist ein ${kb.expertRole}, insbesondere für die Systeme ${kb.systems.join(', ')}. 
-                  Beantworte Fragen präzise, professionell und hilfreich auf Deutsch.
+                  Beantworte Fragen präzise, professionell und hilfreich auf ${language === 'de' ? 'Deutsch' : 'Englisch'}.
                   
                   Du hast Zugriff auf die aktuellen Analyse-Ergebnisse des Dashboards und sollst diese nutzen, um spezifische Fragen zum extrahierten Leistungsverzeichnis zu beantworten.
                   
@@ -123,15 +132,15 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
       };
 
       const response = await generateWithRetry();
-      const botResponse = response.text || "Entschuldigung, ich konnte keine Antwort generieren.";
+      const botResponse = response.text || t.chatbot.noResponse;
       
       setMessages(prev => [...prev, { role: 'model', text: botResponse }]);
     } catch (error: any) {
       console.error("Chat error:", error);
       const isQuotaError = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota');
       const errorMessage = isQuotaError 
-        ? "Die KI-Quote ist derzeit erschöpft. Bitte versuchen Sie es in einer Minute erneut."
-        : "Es gab einen Fehler bei der Verbindung zum KI-Dienst. Bitte versuchen Sie es später erneut.";
+        ? t.chatbot.quotaError
+        : t.chatbot.connectionError;
       setMessages(prev => [...prev, { role: 'model', text: errorMessage }]);
     } finally {
       setIsLoading(false);
@@ -159,10 +168,10 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
                   <Bot className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm">Siemens NSHV Experte</h3>
+                  <h3 className="font-bold text-sm">{t.chatbot.expertName}</h3>
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse"></div>
-                    <span className="text-[10px] text-white/80 uppercase tracking-wider font-medium">Online</span>
+                    <span className="text-[10px] text-white/80 uppercase tracking-wider font-medium">{t.chatbot.online}</span>
                   </div>
                 </div>
               </div>
@@ -170,7 +179,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
                 <button 
                   onClick={() => setIsMaximized(!isMaximized)}
                   className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
-                  title={isMaximized ? "Verkleinern" : "Vergrößern"}
+                  title={isMaximized ? t.chatbot.minimize : t.chatbot.maximize}
                 >
                   {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                 </button>
@@ -234,7 +243,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="Fragen Sie etwas..."
+                  placeholder={t.chatbot.askSomething}
                   className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#009999]/20 focus:border-[#009999] transition-all"
                 />
                 <button
