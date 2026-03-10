@@ -144,7 +144,6 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
     <div className="space-y-8">
       {/* Top Row */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        {/* Left Column: Details */}
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}

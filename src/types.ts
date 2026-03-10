@@ -35,6 +35,34 @@ export interface SwitchgearData {
   positions: Evidence[];
 }
 
+export interface Project {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  
+  // Project Header Data
+  customer: string;
+  projectTitle: string;
+  vb: string;
+  region: string;
+  partnership: string;
+  editor: string;
+  plannedSystem: string;
+  panelCount: number | null;
+  revenueP310: number | null;
+  revenueP360: number | null;
+  totalRevenue: number | null;
+  opportunity: string;
+  sieSalesMaintained: boolean;
+  tenderedBrand: string;
+  remarks: string;
+  
+  // Analyzed Data
+  analysisData: SwitchgearData | null;
+  fileName: string;
+  fileContent?: string;
+}
+
 export type SystemRecommendation = 'ALPHA 3200 eco' | 'ALPHA 3200 classic' | 'SIVACON S8';
 
 export interface EvaluationResult {
