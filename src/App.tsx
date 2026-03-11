@@ -208,7 +208,7 @@ export default function App() {
             <div className="hidden sm:flex flex-col">
               <h1 className="text-sm font-semibold tracking-wide flex items-center gap-2">
                 {t.header.title}
-                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.8.7</span>
+                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.9.1</span>
               </h1>
               <span className="text-[10px] text-white/80 uppercase tracking-wider">{t.header.subtitle}</span>
             </div>
@@ -250,7 +250,7 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 flex flex-col">
+      <main className="max-w-[2200px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 flex flex-col w-full min-w-0">
         <AnimatePresence mode="wait">
           {view === 'projects' && (
             <ProjectList 

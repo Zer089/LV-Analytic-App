@@ -34,7 +34,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     totalRevenue: null,
     opportunity: '',
     sieSalesMaintained: false,
-    entryDate: new Date().toISOString().split('T')[0],
     tenderedBrand: '',
     remarks: '',
   });
@@ -173,9 +172,9 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#009999] focus:border-transparent outline-none transition-all"
             >
               <option value=""></option>
-              <option value="Konstantin Frank">Konstantin Frank</option>
-              <option value="Andreas Schreiber">Andreas Schreiber</option>
-              <option value="Kevin Eckstein">Kevin Eckstein</option>
+              <option value="Frank">Frank</option>
+              <option value="Schreiber">Schreiber</option>
+              <option value="Eckstein">Eckstein</option>
             </select>
           </div>
           <div className="space-y-1">
