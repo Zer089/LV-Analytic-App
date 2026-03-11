@@ -21,6 +21,7 @@ type ViewState = 'projects' | 'upload' | 'loading' | 'results' | 'save-project';
 export default function App() {
   const { language, setLanguage, t } = useLanguage();
   const [view, setView] = useState<ViewState>('projects');
+  const [previousView, setPreviousView] = useState<ViewState>('projects');
   const [projects, setProjects] = useState<Project[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -144,6 +145,7 @@ export default function App() {
     setCurrentProject(project);
     setData(project.analysisData);
     setFile(new File([], project.fileName));
+    setPreviousView('projects');
     setView('save-project');
   };
 
@@ -206,7 +208,7 @@ export default function App() {
             <div className="hidden sm:flex flex-col">
               <h1 className="text-sm font-semibold tracking-wide flex items-center gap-2">
                 {t.header.title}
-                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.7.2</span>
+                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.8.5</span>
               </h1>
               <span className="text-[10px] text-white/80 uppercase tracking-wider">{t.header.subtitle}</span>
             </div>
@@ -357,7 +359,10 @@ export default function App() {
                   <div className="flex items-center gap-4">
                     {currentProject && (
                       <button 
-                        onClick={() => setView('save-project')}
+                        onClick={() => {
+                          setPreviousView('results');
+                          setView('save-project');
+                        }}
                         className="px-6 py-2 bg-white border border-[#009999] text-[#009999] hover:bg-[#009999]/5 font-bold rounded-xl transition-all flex items-center gap-2"
                       >
                         <Edit2 className="w-4 h-4" />
@@ -367,7 +372,10 @@ export default function App() {
                     
                     {!currentProject && (
                       <button 
-                        onClick={() => setView('save-project')}
+                        onClick={() => {
+                          setPreviousView('results');
+                          setView('save-project');
+                        }}
                         className="px-6 py-2 bg-[#009999] hover:bg-[#008888] text-white font-bold rounded-xl transition-all shadow-lg shadow-[#009999]/20 flex items-center gap-2"
                       >
                         <Plus className="w-4 h-4" />
@@ -389,7 +397,7 @@ export default function App() {
                 analysisData={data} 
                 fileName={file?.name || 'Document'} 
                 onSave={handleSaveProject}
-                onCancel={() => setView('results')}
+                onCancel={() => setView(previousView)}
                 initialData={currentProject || undefined}
               />
             </div>

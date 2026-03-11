@@ -132,10 +132,15 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.partnership}</label>
-            <input 
-              type="text" name="partnership" value={formData.partnership || ''} onChange={handleChange}
+            <select 
+              name="partnership" value={formData.partnership || ''} onChange={handleChange}
               className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#009999] focus:border-transparent outline-none transition-all"
-            />
+            >
+              <option value=""></option>
+              <option value={t.projects.fields.noPartnership}>{t.projects.fields.noPartnership}</option>
+              <option value={t.projects.fields.alphaPartner}>{t.projects.fields.alphaPartner}</option>
+              <option value={t.projects.fields.franchisePartner}>{t.projects.fields.franchisePartner}</option>
+            </select>
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.editor}</label>
@@ -173,26 +178,35 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.revenueP310}</label>
-            <input 
-              type="number" name="revenueP310" value={formData.revenueP310 || ''} onChange={handleChange}
-              className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#009999] focus:border-transparent outline-none transition-all"
-            />
+            <div className="relative">
+              <input 
+                type="number" name="revenueP310" value={formData.revenueP310 || ''} onChange={handleChange}
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#009999] focus:border-transparent outline-none transition-all pr-10"
+              />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">€</div>
+            </div>
           </div>
 
           {/* Row 4 */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.revenueP360}</label>
-            <input 
-              type="number" name="revenueP360" value={formData.revenueP360 || ''} onChange={handleChange}
-              className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#009999] focus:border-transparent outline-none transition-all"
-            />
+            <div className="relative">
+              <input 
+                type="number" name="revenueP360" value={formData.revenueP360 || ''} onChange={handleChange}
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#009999] focus:border-transparent outline-none transition-all pr-10"
+              />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">€</div>
+            </div>
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.totalRevenue}</label>
-            <input 
-              type="number" name="totalRevenue" value={formData.totalRevenue || ''} onChange={handleChange}
-              className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#009999] focus:border-transparent outline-none transition-all"
-            />
+            <div className="relative">
+              <input 
+                type="number" name="totalRevenue" value={formData.totalRevenue || ''} onChange={handleChange}
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#009999] focus:border-transparent outline-none transition-all pr-10"
+              />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">€</div>
+            </div>
           </div>
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.opportunity}</label>
