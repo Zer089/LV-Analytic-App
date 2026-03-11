@@ -20,6 +20,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
 }) => {
   const { t } = useLanguage();
   const [formData, setFormData] = useState<Partial<Project>>(initialData || {
+    entryDate: new Date().toISOString().split('T')[0],
     customer: '',
     projectTitle: '',
     vb: '',
@@ -33,6 +34,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     totalRevenue: null,
     opportunity: '',
     sieSalesMaintained: false,
+    entryDate: new Date().toISOString().split('T')[0],
     tenderedBrand: '',
     remarks: '',
   });
@@ -41,16 +43,28 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
     const { name, value, type } = e.target;
     const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
     
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'number' ? (value === '' ? null : parseFloat(value)) : val
-    }));
+    setFormData(prev => {
+      const next = {
+        ...prev,
+        [name]: type === 'number' ? (value === '' ? null : parseFloat(value)) : val
+      };
+      
+      // Auto-calculate totalRevenue if P310 or P360 changes
+      if (name === 'revenueP310' || name === 'revenueP360') {
+        const p310 = name === 'revenueP310' ? (value === '' ? 0 : parseFloat(value)) : (prev.revenueP310 || 0);
+        const p360 = name === 'revenueP360' ? (value === '' ? 0 : parseFloat(value)) : (prev.revenueP360 || 0);
+        next.totalRevenue = p310 + p360;
+      }
+      
+      return next;
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const project: Project = {
       id: initialData?.id || Math.random().toString(36).substr(2, 9),
+      entryDate: formData.entryDate || new Date().toISOString().split('T')[0],
       createdAt: initialData?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       customer: formData.customer || '',
@@ -91,6 +105,14 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Row 1 */}
           <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.entryDate}</label>
+            <input 
+              type="date" name="entryDate" value={formData.entryDate || ''} onChange={handleChange}
+              className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#009999] focus:border-transparent outline-none transition-all"
+              required
+            />
+          </div>
+          <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.customer}</label>
             <input 
               type="text" name="customer" value={formData.customer || ''} onChange={handleChange}
@@ -106,6 +128,8 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               required
             />
           </div>
+
+          {/* Row 2 */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.vb}</label>
             <input 
@@ -113,8 +137,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#009999] focus:border-transparent outline-none transition-all"
             />
           </div>
-
-          {/* Row 2 */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.region}</label>
             <select 
@@ -142,6 +164,8 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               <option value={t.projects.fields.franchisePartner}>{t.projects.fields.franchisePartner}</option>
             </select>
           </div>
+
+          {/* Row 3 */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.editor}</label>
             <select 
@@ -154,8 +178,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               <option value="Kevin Eckstein">Kevin Eckstein</option>
             </select>
           </div>
-
-          {/* Row 3 */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.plannedSystem}</label>
             <select 
@@ -176,6 +198,8 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#009999] focus:border-transparent outline-none transition-all"
             />
           </div>
+
+          {/* Row 4 */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.revenueP310}</label>
             <div className="relative">
@@ -186,8 +210,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">€</div>
             </div>
           </div>
-
-          {/* Row 4 */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.revenueP360}</label>
             <div className="relative">
@@ -202,12 +224,14 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.totalRevenue}</label>
             <div className="relative">
               <input 
-                type="number" name="totalRevenue" value={formData.totalRevenue || ''} onChange={handleChange}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#009999] focus:border-transparent outline-none transition-all pr-10"
+                type="number" name="totalRevenue" value={formData.totalRevenue || ''} readOnly
+                className="w-full px-4 py-2 bg-slate-100 border border-slate-200 rounded-xl outline-none transition-all pr-10 cursor-not-allowed"
               />
               <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">€</div>
             </div>
           </div>
+
+          {/* Row 5 */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.opportunity}</label>
             <input 
@@ -215,8 +239,6 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({
               className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#009999] focus:border-transparent outline-none transition-all"
             />
           </div>
-
-          {/* Row 5 */}
           <div className="space-y-1">
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{t.projects.fields.tenderedBrand}</label>
             <select 

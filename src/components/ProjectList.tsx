@@ -4,7 +4,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { 
   Folder, Calendar, User, Building2, Trash2, ChevronRight, Plus, Edit2, 
   LayoutGrid, List as ListIcon, Search, ExternalLink, ArrowUpDown, 
-  ArrowUp, ArrowDown, MapPin, Briefcase, Users, Coins
+  ArrowUp, ArrowDown, MapPin, Briefcase, Users, Coins, CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -56,9 +56,9 @@ export const ProjectList: React.FC<ProjectListProps> = ({
         let valA: any = a[sortField as keyof Project];
         let valB: any = b[sortField as keyof Project];
 
-        if (sortField === 'updatedAt' || sortField === 'createdAt') {
-          valA = new Date(valA).getTime();
-          valB = new Date(valB).getTime();
+        if (sortField === 'updatedAt' || sortField === 'createdAt' || sortField === 'entryDate') {
+          valA = valA ? new Date(valA).getTime() : 0;
+          valB = valB ? new Date(valB).getTime() : 0;
         }
 
         if (valA === valB) return 0;
@@ -75,6 +75,18 @@ export const ProjectList: React.FC<ProjectListProps> = ({
     if (!opportunity) return;
     const url = `https://siemenscrm.lightning.force.com/lightning/r/Opportunity/${opportunity}/view`;
     window.open(url, '_blank');
+  };
+
+  const roundTo100 = (val: number | null) => {
+    if (val === null) return '-';
+    return `${(Math.round(val / 100) * 100).toLocaleString()} €`;
+  };
+
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (window.confirm(t.projects.confirmDelete)) {
+      onDelete(id);
+    }
   };
 
   if (projects.length === 0) {
@@ -214,6 +226,14 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                       <span className="truncate">{project.partnership || '-'}</span>
                     </div>
                     <div className="flex items-center text-xs text-slate-500">
+                      <User className="w-3.5 h-3.5 mr-2 text-slate-400" />
+                      <span className="truncate">{project.editor || '-'}</span>
+                    </div>
+                    <div className="flex items-center text-xs text-slate-500">
+                      <CheckCircle2 className={`w-3.5 h-3.5 mr-2 ${project.sieSalesMaintained ? 'text-emerald-500' : 'text-slate-300'}`} />
+                      <span className="truncate">{project.sieSalesMaintained ? 'SieSales OK' : 'SieSales offen'}</span>
+                    </div>
+                    <div className="flex items-center text-xs text-slate-500">
                       <Coins className="w-3.5 h-3.5 mr-2 text-slate-400" />
                       <span className="truncate font-bold text-slate-700">
                         {project.totalRevenue ? `${project.totalRevenue.toLocaleString()} €` : '-'}
@@ -225,9 +245,16 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                 <div className="bg-slate-50 px-6 py-3 flex justify-between items-center group-hover:bg-[#009999]/5 transition-colors mt-auto">
                   <div className="flex flex-col">
                     <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">System</span>
-                    <span className="text-xs font-bold text-[#009999]">
-                      {project.plannedSystem || 'No System'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-[#009999]">
+                        {project.plannedSystem || 'No System'}
+                      </span>
+                      {project.panelCount !== null && (
+                        <span className="text-[10px] bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-500 font-medium">
+                          {project.panelCount} Felder
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#009999] transition-all transform group-hover:translate-x-1" />
                 </div>
@@ -247,9 +274,9 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                 <tr className="bg-slate-50 border-b border-slate-100">
                   <th 
                     className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
-                    onClick={() => handleSort('updatedAt')}
+                    onClick={() => handleSort('entryDate')}
                   >
-                    <div className="flex items-center">{t.projects.fields.date} <SortIcon field="updatedAt" /></div>
+                    <div className="flex items-center">{t.projects.fields.entryDateShort} <SortIcon field="entryDate" /></div>
                   </th>
                   <th 
                     className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
@@ -261,19 +288,37 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                     className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
                     onClick={() => handleSort('customer')}
                   >
-                    <div className="flex items-center">{t.projects.fields.customer} <SortIcon field="customer" /></div>
+                    <div className="flex items-center">{t.projects.fields.customerShort} <SortIcon field="customer" /></div>
                   </th>
                   <th 
                     className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
                     onClick={() => handleSort('vb')}
                   >
-                    <div className="flex items-center">{t.projects.fields.vb} <SortIcon field="vb" /></div>
+                    <div className="flex items-center">{t.projects.fields.vbShort} <SortIcon field="vb" /></div>
                   </th>
                   <th 
                     className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
                     onClick={() => handleSort('region')}
                   >
                     <div className="flex items-center">{t.projects.fields.region} <SortIcon field="region" /></div>
+                  </th>
+                  <th 
+                    className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={() => handleSort('partnership')}
+                  >
+                    <div className="flex items-center">{t.projects.fields.partnership} <SortIcon field="partnership" /></div>
+                  </th>
+                  <th 
+                    className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={() => handleSort('editor')}
+                  >
+                    <div className="flex items-center">{t.projects.fields.editor} <SortIcon field="editor" /></div>
+                  </th>
+                  <th 
+                    className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                    onClick={() => handleSort('plannedSystem')}
+                  >
+                    <div className="flex items-center">{t.projects.fields.plannedSystem} <SortIcon field="plannedSystem" /></div>
                   </th>
                   <th 
                     className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors text-center"
@@ -299,7 +344,12 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                   >
                     <div className="flex items-center justify-end">Gesamt <SortIcon field="totalRevenue" /></div>
                   </th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">{t.projects.fields.actions}</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <img src="/public/images/SieSales.png" alt="SieSales" className="h-4 w-auto" title="zur SieSales Opportunity" />
+                      {t.projects.fields.actions}
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -309,7 +359,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                     onClick={() => onSelect(project)}
                     className="hover:bg-slate-50 transition-colors cursor-pointer group"
                   >
-                    <td className="px-6 py-4 text-sm text-slate-500">{new Date(project.updatedAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{project.entryDate ? new Date(project.entryDate).toLocaleDateString() : '-'}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <Building2 className="w-5 h-5 text-[#009999]" />
@@ -319,17 +369,20 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                     <td className="px-6 py-4 text-sm text-slate-600 truncate max-w-[150px]">{project.customer}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">{project.vb || '-'}</td>
                     <td className="px-6 py-4 text-sm text-slate-600">{project.region || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{project.partnership || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{project.editor || '-'}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{project.plannedSystem || '-'}</td>
                     <td className="px-6 py-4 text-sm text-slate-600 text-center">{project.panelCount || '-'}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600 text-right">{project.revenueP310 ? `${project.revenueP310.toLocaleString()} €` : '-'}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600 text-right">{project.revenueP360 ? `${project.revenueP360.toLocaleString()} €` : '-'}</td>
-                    <td className="px-6 py-4 text-sm font-bold text-slate-900 text-right">{project.totalRevenue ? `${project.totalRevenue.toLocaleString()} €` : '-'}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600 text-right">{roundTo100(project.revenueP310)}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600 text-right">{roundTo100(project.revenueP360)}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-slate-900 text-right">{roundTo100(project.totalRevenue)}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end space-x-1">
                         {project.opportunity && (
                           <button 
                             onClick={(e) => handleOpportunityLink(e, project.opportunity)}
                             className="p-2 text-slate-300 hover:text-[#009999] hover:bg-[#009999]/10 rounded-lg transition-all"
-                            title="CRM Opportunity"
+                            title="zur SieSales Opportunity"
                           >
                             <ExternalLink className="w-4 h-4" />
                           </button>
@@ -344,10 +397,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete(project.id);
-                          }}
+                          onClick={(e) => handleDelete(e, project.id)}
                           className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                         >
                           <Trash2 className="w-4 h-4" />

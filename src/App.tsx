@@ -208,7 +208,7 @@ export default function App() {
             <div className="hidden sm:flex flex-col">
               <h1 className="text-sm font-semibold tracking-wide flex items-center gap-2">
                 {t.header.title}
-                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.8.5</span>
+                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.8.7</span>
               </h1>
               <span className="text-[10px] text-white/80 uppercase tracking-wider">{t.header.subtitle}</span>
             </div>

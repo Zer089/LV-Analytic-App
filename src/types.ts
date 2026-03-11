@@ -37,6 +37,7 @@ export interface SwitchgearData {
 
 export interface Project {
   id: string;
+  entryDate: string;
   createdAt: string;
   updatedAt: string;
   
