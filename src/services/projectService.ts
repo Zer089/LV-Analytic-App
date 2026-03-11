@@ -1,39 +1,54 @@
 import { Project } from '../types';
+import { get, set } from 'idb-keyval';
 
 const STORAGE_KEY = 'siemens_lv_projects';
 
 export const projectService = {
-  getProjects: (): Project[] => {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) return [];
+  getProjects: async (): Promise<Project[]> => {
     try {
-      return JSON.parse(data);
+      const projects = await get<Project[]>(STORAGE_KEY);
+      return projects || [];
     } catch (e) {
-      console.error('Failed to parse projects from localStorage', e);
+      console.error('Failed to get projects from IndexedDB', e);
       return [];
     }
   },
 
-  saveProject: (project: Project): void => {
-    const projects = projectService.getProjects();
+  saveProject: async (project: Project): Promise<void> => {
+    const projects = await projectService.getProjects();
     const index = projects.findIndex(p => p.id === project.id);
     
+    let updatedProjects: Project[];
     if (index >= 0) {
-      projects[index] = { ...project, updatedAt: new Date().toISOString() };
+      updatedProjects = [...projects];
+      updatedProjects[index] = { ...project, updatedAt: new Date().toISOString() };
     } else {
-      projects.push({
-        ...project,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
+      updatedProjects = [
+        ...projects,
+        {
+          ...project,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ];
     }
     
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
+    try {
+      await set(STORAGE_KEY, updatedProjects);
+    } catch (e) {
+      console.error('Failed to save projects to IndexedDB', e);
+      throw e;
+    }
   },
 
-  deleteProject: (id: string): void => {
-    const projects = projectService.getProjects();
+  deleteProject: async (id: string): Promise<void> => {
+    const projects = await projectService.getProjects();
     const filtered = projects.filter(p => p.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    try {
+      await set(STORAGE_KEY, filtered);
+    } catch (e) {
+      console.error('Failed to delete project from IndexedDB', e);
+      throw e;
+    }
   }
 };

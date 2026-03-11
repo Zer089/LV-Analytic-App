@@ -31,7 +31,27 @@ export default function App() {
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
 
   useEffect(() => {
-    setProjects(projectService.getProjects());
+    const loadProjects = async () => {
+      // Migration from localStorage to IndexedDB if needed
+      const oldData = localStorage.getItem('siemens_lv_projects');
+      if (oldData) {
+        try {
+          const oldProjects = JSON.parse(oldData);
+          if (Array.isArray(oldProjects) && oldProjects.length > 0) {
+            for (const p of oldProjects) {
+              await projectService.saveProject(p);
+            }
+          }
+          localStorage.removeItem('siemens_lv_projects');
+        } catch (e) {
+          console.error('Migration failed', e);
+        }
+      }
+
+      const loadedProjects = await projectService.getProjects();
+      setProjects(loadedProjects);
+    };
+    loadProjects();
   }, []);
 
   const handleFileSelect = async (selectedFile: File) => {
@@ -128,17 +148,28 @@ export default function App() {
       }
     }
     
-    projectService.saveProject(project);
-    setProjects(projectService.getProjects());
-    setView('projects');
-    setCurrentProject(null);
-    setData(null);
-    setFile(null);
+    try {
+      await projectService.saveProject(project);
+      const updatedProjects = await projectService.getProjects();
+      setProjects(updatedProjects);
+      setView('projects');
+      setCurrentProject(null);
+      setData(null);
+      setFile(null);
+    } catch (err: any) {
+      console.error("Save error:", err);
+      setError(language === 'de' ? 'Fehler beim Speichern des Projekts. Möglicherweise ist der Speicherplatz voll.' : 'Error saving project. Storage space might be full.');
+    }
   };
 
-  const handleDeleteProject = (id: string) => {
-    projectService.deleteProject(id);
-    setProjects(projectService.getProjects());
+  const handleDeleteProject = async (id: string) => {
+    try {
+      await projectService.deleteProject(id);
+      const updatedProjects = await projectService.getProjects();
+      setProjects(updatedProjects);
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
   };
 
   const handleEditProject = (project: Project) => {
@@ -208,7 +239,7 @@ export default function App() {
             <div className="hidden sm:flex flex-col">
               <h1 className="text-sm font-semibold tracking-wide flex items-center gap-2">
                 {t.header.title}
-                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.9.1</span>
+                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.9.4</span>
               </h1>
               <span className="text-[10px] text-white/80 uppercase tracking-wider">{t.header.subtitle}</span>
             </div>

@@ -208,7 +208,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                         <button 
                           onClick={(e) => handleOpportunityLink(e, project.opportunity)}
                           className="p-2 text-slate-300 hover:text-[#009999] hover:bg-[#009999]/10 rounded-lg transition-all"
-                          title="zur SieSales Opportunity"
+                          title={t.projects.opportunityTooltip}
                         >
                           <ExternalLink className="w-4 h-4" />
                         </button>
@@ -265,7 +265,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                     </div>
                     <div className="flex items-center text-xs text-slate-500">
                       <Coins className="w-3.5 h-3.5 mr-2 text-slate-400" />
-                      <span className="truncate font-bold text-slate-700">
+                      <span className="truncate text-slate-500">
                         {roundTo100(project.totalRevenue)}
                       </span>
                     </div>
@@ -376,7 +376,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                   </th>
                   <th className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">
                     <div className="flex items-center justify-center">
-                      <img src="/public/images/SieSales.png" alt="SieSales" className="h-4 w-auto" title="SieSales gepflegt" />
+                      <img src="/public/images/SieSales.png" alt="SieSales" className="h-4 w-auto" title={t.projects.fields.sieSalesMaintained} />
                     </div>
                   </th>
                   <th className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">{t.projects.fields.actions}</th>
@@ -389,22 +389,22 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                     onClick={() => onSelect(project)}
                     className="hover:bg-slate-50 transition-colors cursor-pointer group"
                   >
-                    <td className="px-3 py-2 text-xs text-slate-500">{formatDate(project.entryDate)}</td>
+                    <td className="px-3 py-2 text-xs text-slate-500 group-hover:text-[#009999] transition-colors">{formatDate(project.entryDate)}</td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
                         <span className="font-normal text-xs text-slate-500 group-hover:text-[#009999] transition-colors truncate max-w-[300px] block">{project.projectTitle}</span>
                       </div>
                     </td>
-                    <td className="px-3 py-2 text-xs text-slate-600 truncate max-w-[250px]">{project.customer}</td>
-                    <td className="px-3 py-2 text-xs text-slate-600">{project.vb || '-'}</td>
-                    <td className="px-3 py-2 text-xs text-slate-600">{project.region || '-'}</td>
-                    <td className="px-3 py-2 text-xs text-slate-600">{project.partnership || '-'}</td>
-                    <td className="px-3 py-2 text-xs text-slate-600">{project.editor || '-'}</td>
-                    <td className="px-3 py-2 text-xs text-slate-600">{project.plannedSystem || '-'}</td>
-                    <td className="px-3 py-2 text-xs text-slate-600 text-center">{project.panelCount || '-'}</td>
-                    <td className="px-3 py-2 text-xs text-slate-600 text-right whitespace-nowrap">{roundTo100(project.revenueP310)}</td>
-                    <td className="px-3 py-2 text-xs text-slate-600 text-right whitespace-nowrap">{roundTo100(project.revenueP360)}</td>
-                    <td className="px-3 py-2 text-xs font-bold text-slate-900 text-right whitespace-nowrap">{roundTo100(project.totalRevenue)}</td>
+                    <td className="px-3 py-2 text-xs text-slate-600 group-hover:text-[#009999] transition-colors truncate max-w-[250px]">{project.customer}</td>
+                    <td className="px-3 py-2 text-xs text-slate-600 group-hover:text-[#009999] transition-colors">{project.vb || '-'}</td>
+                    <td className="px-3 py-2 text-xs text-slate-600 group-hover:text-[#009999] transition-colors">{project.region || '-'}</td>
+                    <td className="px-3 py-2 text-xs text-slate-600 group-hover:text-[#009999] transition-colors">{project.partnership || '-'}</td>
+                    <td className="px-3 py-2 text-xs text-slate-600 group-hover:text-[#009999] transition-colors">{project.editor || '-'}</td>
+                    <td className="px-3 py-2 text-xs text-slate-600 group-hover:text-[#009999] transition-colors">{project.plannedSystem || '-'}</td>
+                    <td className="px-3 py-2 text-xs text-slate-600 group-hover:text-[#009999] transition-colors text-center">{project.panelCount || '-'}</td>
+                    <td className="px-3 py-2 text-xs text-slate-600 group-hover:text-[#009999] transition-colors text-right whitespace-nowrap">{roundTo100(project.revenueP310)}</td>
+                    <td className="px-3 py-2 text-xs text-slate-600 group-hover:text-[#009999] transition-colors text-right whitespace-nowrap">{roundTo100(project.revenueP360)}</td>
+                    <td className="px-3 py-2 text-xs text-slate-600 group-hover:text-[#009999] transition-colors text-right whitespace-nowrap">{roundTo100(project.totalRevenue)}</td>
                     <td className="px-3 py-2 text-center">
                       {project.sieSalesMaintained ? (
                         <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" />
@@ -418,7 +418,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                           <button 
                             onClick={(e) => handleOpportunityLink(e, project.opportunity)}
                             className="p-1 text-slate-300 hover:text-[#009999] hover:bg-[#009999]/10 rounded transition-all"
-                            title="zur SieSales Opportunity"
+                            title={t.projects.opportunityTooltip}
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
                           </button>
@@ -429,12 +429,14 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                             onEdit(project);
                           }}
                           className="p-1 text-slate-300 hover:text-[#009999] hover:bg-[#009999]/10 rounded transition-all"
+                          title={t.projects.edit}
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button 
                           onClick={(e) => handleDelete(e, project.id)}
                           className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-all"
+                          title={t.projects.delete}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
