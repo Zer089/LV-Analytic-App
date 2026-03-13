@@ -133,7 +133,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   return (
     <div className="flex-1 w-full py-8 px-2 sm:px-4 min-w-0">
       <div className={`${viewMode === 'grid' ? 'max-w-[1800px]' : 'w-full'} mx-auto min-w-0`}>
-        <div className="sticky top-16 z-20 bg-slate-50/95 backdrop-blur-sm pb-6 pt-2 w-full">
+        <div className="sticky top-16 z-40 bg-slate-50/80 backdrop-blur-md pb-4 pt-2 w-full border-b border-slate-200/50">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <h2 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
               <Folder className="w-8 h-8 text-[#009999]" />
@@ -299,87 +299,87 @@ export const ProjectList: React.FC<ProjectListProps> = ({
             exit={{ opacity: 0 }}
             className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-x-auto w-full relative"
           >
-            <table className="w-full text-left border-collapse min-w-[1600px]">
-              <thead className="bg-slate-50">
-                <tr className="bg-slate-50 border-b border-slate-100">
+            <table className="w-full text-left border-separate border-spacing-0 min-w-[1600px]">
+              <thead>
+                <tr className="border-b border-slate-100">
                   <th 
-                    className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                    className="sticky top-[136px] z-30 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 border-b border-slate-200 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('entryDate')}
                   >
                     <div className="flex items-center">{t.projects.fields.entryDateShort} <SortIcon field="entryDate" /></div>
                   </th>
                   <th 
-                    className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                    className="sticky top-[136px] z-30 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 border-b border-slate-200 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('projectTitle')}
                   >
                     <div className="flex items-center">{t.projects.fields.projectTitle} <SortIcon field="projectTitle" /></div>
                   </th>
                   <th 
-                    className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                    className="sticky top-[136px] z-30 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 border-b border-slate-200 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('customer')}
                   >
                     <div className="flex items-center">{t.projects.fields.customerShort} <SortIcon field="customer" /></div>
                   </th>
                   <th 
-                    className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                    className="sticky top-[136px] z-30 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 border-b border-slate-200 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('vb')}
                   >
                     <div className="flex items-center">{t.projects.fields.vbShort} <SortIcon field="vb" /></div>
                   </th>
                   <th 
-                    className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                    className="sticky top-[136px] z-30 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 border-b border-slate-200 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('region')}
                   >
                     <div className="flex items-center">{t.projects.fields.region} <SortIcon field="region" /></div>
                   </th>
                   <th 
-                    className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                    className="sticky top-[136px] z-30 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 border-b border-slate-200 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('partnership')}
                   >
                     <div className="flex items-center">{t.projects.fields.partnership} <SortIcon field="partnership" /></div>
                   </th>
                   <th 
-                    className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                    className="sticky top-[136px] z-30 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 border-b border-slate-200 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('editor')}
                   >
                     <div className="flex items-center">{t.projects.fields.editor} <SortIcon field="editor" /></div>
                   </th>
                   <th 
-                    className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors"
+                    className="sticky top-[136px] z-30 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 border-b border-slate-200 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('plannedSystem')}
                   >
                     <div className="flex items-center">System <SortIcon field="plannedSystem" /></div>
                   </th>
                   <th 
-                    className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors text-center"
+                    className="sticky top-[136px] z-30 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 border-b border-slate-200 shadow-[0_1px_0_0_rgba(0,0,0,0.05)] text-center"
                     onClick={() => handleSort('panelCount')}
                   >
                     <div className="flex items-center justify-center">{t.projects.fields.panelCount.includes(' ') ? t.projects.fields.panelCount.split(' ').pop() : t.projects.fields.panelCount} <SortIcon field="panelCount" /></div>
                   </th>
                   <th 
-                    className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors text-right"
+                    className="sticky top-[136px] z-30 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 border-b border-slate-200 shadow-[0_1px_0_0_rgba(0,0,0,0.05)] text-right"
                     onClick={() => handleSort('revenueP310')}
                   >
                     <div className="flex items-center justify-end">P310 <SortIcon field="revenueP310" /></div>
                   </th>
                   <th 
-                    className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors text-right"
+                    className="sticky top-[136px] z-30 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 border-b border-slate-200 shadow-[0_1px_0_0_rgba(0,0,0,0.05)] text-right"
                     onClick={() => handleSort('revenueP360')}
                   >
                     <div className="flex items-center justify-end">P360 <SortIcon field="revenueP360" /></div>
                   </th>
                   <th 
-                    className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors text-right"
+                    className="sticky top-[136px] z-30 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 border-b border-slate-200 shadow-[0_1px_0_0_rgba(0,0,0,0.05)] text-right"
                     onClick={() => handleSort('totalRevenue')}
                   >
                     <div className="flex items-center justify-end">{t.projects.fields.totalRevenue} <SortIcon field="totalRevenue" /></div>
                   </th>
-                  <th className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">
+                  <th className="sticky top-[136px] z-30 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center bg-slate-50 border-b border-slate-200 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
                     <div className="flex items-center justify-center">
                       <img src="/public/images/SieSales.png" alt="SieSales" className="h-4 w-auto" title={t.projects.fields.sieSalesMaintained} />
                     </div>
                   </th>
-                  <th className="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center">{t.projects.fields.actions}</th>
+                  <th className="sticky top-[136px] z-30 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center bg-slate-50 border-b border-slate-200 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">{t.projects.fields.actions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">

@@ -228,7 +228,7 @@ export default function App() {
       
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="bg-[#009999] text-white sticky top-0 z-20 shadow-md">
+        <header className="bg-[#009999] text-white sticky top-0 z-50 shadow-md">
         <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Siemens-like Logo Placeholder */}
@@ -239,7 +239,7 @@ export default function App() {
             <div className="hidden sm:flex flex-col">
               <h1 className="text-sm font-semibold tracking-wide flex items-center gap-2">
                 {t.header.title}
-                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.9.4</span>
+                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.9.8</span>
               </h1>
               <span className="text-[10px] text-white/80 uppercase tracking-wider">{t.header.subtitle}</span>
             </div>
