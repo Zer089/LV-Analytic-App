@@ -5,9 +5,10 @@ import {
   Folder, Calendar, User, Building2, Trash2, ChevronRight, Plus, Edit2, 
   LayoutGrid, List as ListIcon, Search, ExternalLink, ArrowUpDown, 
   ArrowUp, ArrowDown, MapPin, Briefcase, Users, Coins, CheckCircle2,
-  XCircle, UserRoundPen, PenTool, Handshake, FileText
+  XCircle, UserRoundPen, PenTool, Handshake, FileText, FileSpreadsheet
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import * as XLSX from 'xlsx';
 
 interface ProjectListProps {
   projects: Project[];
@@ -30,6 +31,35 @@ export const ProjectList: React.FC<ProjectListProps> = ({
     const saved = localStorage.getItem('projectListViewMode');
     return (saved as 'grid' | 'list') || 'grid';
   });
+
+  const handleExport = () => {
+    const exportData = projects.map(p => ({
+      [t.projects.fields.entryDateShort]: p.entryDate,
+      [t.projects.fields.customerShort]: p.customer,
+      [t.projects.fields.projectTitle]: p.projectTitle,
+      [t.projects.fields.vbShort]: p.vb,
+      [t.projects.fields.region]: p.region,
+      [t.projects.fields.partnership]: p.partnership,
+      [t.projects.fields.editor]: p.editor,
+      [t.projects.fields.plannedSystem]: p.plannedSystem,
+      [t.projects.fields.panelCount]: p.panelCount,
+      [t.projects.fields.revenueP310]: p.revenueP310,
+      [t.projects.fields.revenueP360]: p.revenueP360,
+      [t.projects.fields.totalRevenue]: p.totalRevenue,
+      [t.projects.fields.opportunity]: p.opportunity,
+      [t.projects.fields.sieSalesMaintained]: p.sieSalesMaintained ? 'Ja' : 'Nein',
+      [t.projects.fields.tenderedBrand]: p.tenderedBrand,
+      [t.projects.fields.remarks]: p.remarks,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Projects");
+    
+    // Generate filename with current date
+    const date = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `Projekte_Export_${date}.xlsx`);
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>('updatedAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
@@ -131,27 +161,36 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   };
 
   return (
-    <div className="flex-1 w-full py-8 px-2 sm:px-4 min-w-0">
-      <div className={`${viewMode === 'grid' ? 'max-w-[1800px]' : 'w-full'} mx-auto min-w-0`}>
-        <div className="sticky top-16 z-30 bg-slate-50/95 backdrop-blur-sm pb-3 pt-2 w-full border-b border-slate-200/50">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-3">
+    <div className="flex-1 w-full py-4 px-2 sm:px-4 min-w-0 flex flex-col overflow-hidden">
+      <div className="w-full mx-auto min-w-0 flex flex-col flex-1 overflow-hidden">
+        <div className="pb-3 pt-2 w-full border-b border-slate-200/50 flex-shrink-0">
+          <div className="flex flex-row flex-wrap items-center justify-between gap-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 flex items-center gap-3 flex-shrink-0">
               <Folder className="w-7 h-7 md:w-8 md:h-8 text-[#009999]" />
               {t.projects.projectsTitle}
             </h2>
 
-            <div className="flex flex-1 w-full md:max-w-md items-center bg-white border border-slate-200 rounded-xl px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-[#009999]/20 focus-within:border-[#009999] transition-all">
-              <Search className="w-5 h-5 text-slate-400 mr-2" />
-              <input 
-                type="text" 
-                placeholder={t.projects.fields.search}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 bg-transparent outline-none text-sm text-slate-700"
-              />
-            </div>
+            <div className="flex flex-1 items-center gap-4 min-w-[240px] justify-end">
+              <div className="flex-1 min-w-[70px] md:max-w-md flex items-center bg-white border border-slate-200 rounded-xl px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-[#009999]/20 focus-within:border-[#009999] transition-all">
+                <Search className="w-5 h-5 text-slate-400 mr-2 flex-shrink-0" />
+                <input 
+                  type="text" 
+                  placeholder={t.projects.fields.search}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 bg-transparent outline-none text-sm text-slate-700 min-w-0"
+                />
+              </div>
 
-            <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
+              <div className="flex-shrink-0 flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
+              <button
+                onClick={handleExport}
+                className="p-2 rounded-lg text-slate-400 hover:text-[#009999] hover:bg-slate-50 transition-all flex items-center gap-2"
+                title={t.projects.exportExcel}
+              >
+                <FileSpreadsheet className="w-5 h-5" />
+              </button>
+              <div className="w-px h-4 bg-slate-200 mx-1" />
               <button
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded-lg transition-all flex items-center gap-2 ${
@@ -177,9 +216,11 @@ export const ProjectList: React.FC<ProjectListProps> = ({
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="h-6" />
+        <div className="h-4 flex-shrink-0" />
 
+      <div className="flex-1 flex flex-col overflow-hidden">
       <AnimatePresence mode="wait">
         {viewMode === 'grid' ? (
           <motion.div
@@ -187,8 +228,9 @@ export const ProjectList: React.FC<ProjectListProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            className="flex-1 overflow-y-auto pr-2 custom-scrollbar"
           >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 py-1">
             {filteredAndSortedProjects.map((project, index) => (
               <motion.div
                 key={project.id}
@@ -292,6 +334,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                 </div>
               </motion.div>
             ))}
+            </div>
           </motion.div>
         ) : (
           <motion.div
@@ -299,89 +342,89 @@ export const ProjectList: React.FC<ProjectListProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-x-auto w-full relative"
+            className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-auto w-full relative flex-1 custom-scrollbar"
           >
             <table className="w-full text-left border-collapse min-w-[1600px]">
               <thead>
                 <tr className="border-b border-slate-100">
                   <th 
-                    className="sticky top-[215px] md:top-[128px] z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
+                    className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('entryDate')}
                   >
                     <div className="flex items-center">{t.projects.fields.entryDateShort} <SortIcon field="entryDate" /></div>
                   </th>
                   <th 
-                    className="sticky top-[215px] md:top-[128px] z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
+                    className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('projectTitle')}
                   >
                     <div className="flex items-center">{t.projects.fields.projectTitle} <SortIcon field="projectTitle" /></div>
                   </th>
                   <th 
-                    className="sticky top-[215px] md:top-[128px] z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
+                    className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('customer')}
                   >
                     <div className="flex items-center">{t.projects.fields.customerShort} <SortIcon field="customer" /></div>
                   </th>
                   <th 
-                    className="sticky top-[215px] md:top-[128px] z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
+                    className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('vb')}
                   >
                     <div className="flex items-center">{t.projects.fields.vbShort} <SortIcon field="vb" /></div>
                   </th>
                   <th 
-                    className="sticky top-[215px] md:top-[128px] z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
+                    className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('region')}
                   >
                     <div className="flex items-center">{t.projects.fields.region} <SortIcon field="region" /></div>
                   </th>
                   <th 
-                    className="sticky top-[215px] md:top-[128px] z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
+                    className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('partnership')}
                   >
                     <div className="flex items-center">{t.projects.fields.partnership} <SortIcon field="partnership" /></div>
                   </th>
                   <th 
-                    className="sticky top-[215px] md:top-[128px] z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
+                    className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('editor')}
                   >
                     <div className="flex items-center">{t.projects.fields.editor} <SortIcon field="editor" /></div>
                   </th>
                   <th 
-                    className="sticky top-[215px] md:top-[128px] z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
+                    className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('plannedSystem')}
                   >
                     <div className="flex items-center">System <SortIcon field="plannedSystem" /></div>
                   </th>
                   <th 
-                    className="sticky top-[215px] md:top-[128px] z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors text-center bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
+                    className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors text-center bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('panelCount')}
                   >
                     <div className="flex items-center justify-center">{t.projects.fields.panelCount.includes(' ') ? t.projects.fields.panelCount.split(' ').pop() : t.projects.fields.panelCount} <SortIcon field="panelCount" /></div>
                   </th>
                   <th 
-                    className="sticky top-[215px] md:top-[128px] z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors text-right bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
+                    className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors text-right bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('revenueP310')}
                   >
                     <div className="flex items-center justify-end">P310 <SortIcon field="revenueP310" /></div>
                   </th>
                   <th 
-                    className="sticky top-[215px] md:top-[128px] z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors text-right bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
+                    className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors text-right bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('revenueP360')}
                   >
                     <div className="flex items-center justify-end">P360 <SortIcon field="revenueP360" /></div>
                   </th>
                   <th 
-                    className="sticky top-[215px] md:top-[128px] z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors text-right bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
+                    className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors text-right bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]"
                     onClick={() => handleSort('totalRevenue')}
                   >
                     <div className="flex items-center justify-end">{t.projects.fields.totalRevenue} <SortIcon field="totalRevenue" /></div>
                   </th>
-                  <th className="sticky top-[215px] md:top-[128px] z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
+                  <th className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
                     <div className="flex items-center justify-center">
                       <img src="/public/images/SieSales.png" alt="SieSales" className="h-4 w-auto" title={t.projects.fields.sieSalesMaintained} />
                     </div>
                   </th>
-                  <th className="sticky top-[215px] md:top-[128px] z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">{t.projects.fields.actions}</th>
+                  <th className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">{t.projects.fields.actions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -452,6 +495,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
 
       <AnimatePresence>
         {projectToDelete && (

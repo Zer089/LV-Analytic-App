@@ -22,6 +22,7 @@ export const translations = {
       opportunityTooltip: 'zur SieSales Opportunity',
       gridView: 'Kachelansicht',
       listView: 'Listenansicht',
+      exportExcel: 'Excel Export',
       header: 'Projektkopf',
       confirmDelete: 'Möchten Sie dieses Projekt wirklich löschen?',
       fields: {
@@ -142,6 +143,7 @@ export const translations = {
       opportunityTooltip: 'to SieSales Opportunity',
       gridView: 'Grid View',
       listView: 'List View',
+      exportExcel: 'Excel Export',
       header: 'Project Header',
       confirmDelete: 'Are you sure you want to delete this project?',
       fields: {

@@ -226,7 +226,7 @@ export default function App() {
         className="fixed inset-0 z-0 bg-[url('/public/images/AI_bagground.png')] bg-cover bg-center bg-no-repeat bg-fixed opacity-40 pointer-events-none"
       />
       
-      <div className="relative z-10 flex flex-col min-h-screen">
+      <div className="relative z-10 flex flex-col h-screen overflow-hidden">
         {/* Header */}
         <header className="bg-[#009999] text-white sticky top-0 z-20 shadow-md">
         <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -239,7 +239,7 @@ export default function App() {
             <div className="hidden sm:flex flex-col">
               <h1 className="text-sm font-semibold tracking-wide flex items-center gap-2">
                 {t.header.title}
-                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.10.3</span>
+                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.10.9</span>
               </h1>
               <span className="text-[10px] text-white/80 uppercase tracking-wider">{t.header.subtitle}</span>
             </div>
@@ -281,7 +281,7 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-[2200px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 flex flex-col w-full min-w-0">
+      <main className="max-w-[2200px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex-1 flex flex-col w-full min-w-0 overflow-hidden">
         <AnimatePresence mode="wait">
           {view === 'projects' && (
             <ProjectList 
@@ -293,7 +293,7 @@ export default function App() {
           )}
 
           {view === 'upload' && (
-            <div className="flex-1 flex flex-col w-full">
+            <div className="flex-1 flex flex-col w-full overflow-y-auto">
               {/* Full-width navigation row */}
               <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] px-4 sm:px-6 lg:px-8 mb-8">
                 <div className="max-w-[1800px] mx-auto flex items-center justify-start">
@@ -353,9 +353,9 @@ export default function App() {
           )}
 
           {view === 'results' && data && (
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col overflow-hidden">
               {/* Full-width navigation row */}
-              <div className="w-full mb-8">
+              <div className="w-full mb-8 flex-shrink-0">
                 <div className="max-w-[2200px] mx-auto flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-6">
                     <button 
@@ -417,13 +417,15 @@ export default function App() {
                 </div>
               </div>
 
-              <ResultsDashboard initialData={data} file={file} />
+              <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
+                <ResultsDashboard initialData={data} file={file} />
+              </div>
               <ChatBot data={data} />
             </div>
           )}
 
           {view === 'save-project' && data && (
-            <div className="max-w-6xl mx-auto w-full">
+            <div className="max-w-6xl mx-auto w-full overflow-y-auto pr-1 custom-scrollbar">
               <ProjectForm 
                 analysisData={data} 
                 fileName={file?.name || 'Document'} 
