@@ -1,0 +1,120 @@
+{
+  "expertRole": "Experte für Siemens Niederspannungshauptverteilungen (NSHV)",
+  "systems": ["SIVACON S8", "ALPHA 3200 classic", "ALPHA 3200 eco"],
+  "systemSpecs": {
+    "ALPHA 3200 eco": {
+      "Bemessungsstrom In": "3200 A",
+      "Sammelschienenlage": "Mittig (185 mm)",
+      "Bemessungsstoßspannungsfestigkeit Uimp": "8 kV",
+      "Bemessungsisolationsspannung Ui": "1000 V",
+      "Bemessungsbetriebsspannung Ue": "400 AC V",
+      "Bemessungsstoßkurzschlussstrom Ipk": "165 kA",
+      "Bemessungskurzzeitstrom Icw (1 s)": "75 kA",
+      "Schutzart nach IEC 60529/EN 60529": "IP30 / IP31 / IP54",
+      "Form der inneren Unterteilung": "1",
+      "Schutzklasse": "1",
+      "Höhe": "2000 mm",
+      "Sockel": "100 / 200 mm",
+      "Breite": "350 … 1100 mm",
+      "Tiefe": "400 / 600 mm",
+      "Aufstellart": "Wand/Rücken an Rücken",
+      "Störlichtbogenklasse": "Ohne",
+      "Lasttrennschalter mit Sicherungen (3NJ63)": "nein",
+      "Abgangsfeld Universaleinbautechnik": "nein",
+      "Blindleistungskompensation": "nein",
+      "Einschubtechnik": "nein",
+      "Motor Controll Center (MCC)": "nein"
+    },
+    "ALPHA 3200 classic": {
+      "Bemessungsstrom In": "3200 A",
+      "Sammelschienenlage": "Hinten",
+      "Bemessungsstoßspannungsfestigkeit Uimp": "8 kV",
+      "Bemessungsisolationsspannung Ui": "1000 V",
+      "Bemessungsbetriebsspannung Ue": "690 AC V",
+      "Bemessungsstoßkurzschlussstrom Ipk": "165 kA",
+      "Bemessungskurzzeitstrom Icw (1 s)": "75 kA",
+      "Schutzart nach IEC 60529/EN 60529": "IP30/ IP31/ IP40/ IP41/ IP54",
+      "Form der inneren Unterteilung": "1/ 2b",
+      "Schutzklasse": "1",
+      "Höhe": "2000 mm",
+      "Sockel": "100 / 200 mm",
+      "Breite": "350 … 1400 mm",
+      "Tiefe": "600 mm",
+      "Aufstellart": "Wand/Rücken an Rücken",
+      "Störlichtbogenklasse": "Ohne / Auf Anfrage: A - Personenschutz",
+      "Lasttrennschalter mit Sicherungen (3NJ63)": "ja",
+      "Abgangsfeld Universaleinbautechnik": "ja",
+      "Blindleistungskompensation": "ja",
+      "Einschubtechnik": "nein",
+      "Motor Controll Center (MCC)": "nein"
+    },
+    "SIVACON S8": {
+      "Bemessungsstrom In": "7010 A",
+      "Sammelschienenlage": "Oben, hinten",
+      "Bemessungsstoßspannungsfestigkeit Uimp": "12 kV",
+      "Bemessungsisolationsspannung Ui": "1000 V",
+      "Bemessungsbetriebsspannung Ue": "690 AC V",
+      "Bemessungsstoßkurzschlussstrom Ipk": "330 kA",
+      "Bemessungskurzzeitstrom Icw (1 s)": "150 kA",
+      "Schutzart nach IEC 60529/EN 60529": "IP30/ IP31/ IP40/ IP41/ IP43/ IP54",
+      "Form der inneren Unterteilung": "1/ 2a/ 2b/ 3a/ 3b/ 4b",
+      "Schutzklasse": "1",
+      "Höhe": "2000 / 2200 mm",
+      "Sockel": "100 / 200 mm",
+      "Breite": "200 … 1400 mm",
+      "Tiefe": "500 … 1200 mm",
+      "Aufstellart": "Wand/Rücken an Rücken/Doppelfront",
+      "Störlichtbogenklasse": "Ohne / A - Personenschutz, C - Erw. Personen- + Anlagenschutz (Feld) / C - Erw. Personen- + Anlagenschutz (Abteil)",
+      "Lasttrennschalter mit Sicherungen (3NJ63)": "ja",
+      "Abgangsfeld Universaleinbautechnik": "ja",
+      "Blindleistungskompensation": "ja",
+      "Einschubtechnik": "ja",
+      "Motor Controll Center (MCC)": "ja"
+    }
+  },
+  "recommendationLogic": {
+    "SIVACON_S8": {
+      "conditions": [
+        "Bemessungsstrom > 3200A (bis 7010A)",
+        "Kurzschlussfestigkeit Icw > 75kA (bis 150kA)",
+        "Stoßkurzschlussstrom Ipk > 165kA (bis 330kA)",
+        "Stoßspannungsfestigkeit Uimp > 8kV (bis 12kV)",
+        "Innere Unterteilung Form 2a, 3a, 3b oder 4b",
+        "Einschubtechnik gefordert",
+        "Motor Control Center (MCC) gefordert",
+        "Aufstellart Doppelfront gefordert",
+        "Höhe > 2000mm (bis 2200mm)",
+        "Breite < 350mm (bis 200mm)"
+      ],
+      "description": "Hochleistungs-Schaltanlage für anspruchsvolle Industrieanwendungen."
+    },
+    "ALPHA_3200_classic": {
+      "conditions": [
+        "Bemessungsbetriebsspannung Ue > 400V (bis 690V)",
+        "Innere Unterteilung Form 2b",
+        "Lasttrennschalter mit Sicherungen (3NJ63) gefordert",
+        "Blindleistungskompensation gefordert",
+        "Abgangsfeld Universaleinbautechnik gefordert",
+        "Sammelschienenlage hinten",
+        "Breite > 1100mm (bis 1400mm)",
+        "Tiefe > 400mm (Standard 600mm)"
+      ],
+      "description": "Vielseitige Schaltanlage für Infrastruktur und Gebäude."
+    },
+    "ALPHA_3200_eco": {
+      "conditions": [
+        "Standardlösung für einfache Anwendungen bis 3200A",
+        "Bemessungsbetriebsspannung Ue = 400V",
+        "Innere Unterteilung Form 1",
+        "Sammelschienenlage mittig",
+        "Keine der Bedingungen für S8 oder classic treffen zu"
+      ],
+      "description": "Wirtschaftliche Lösung für Standardanwendungen."
+    }
+  },
+  "generalKnowledge": [
+    "Niederspannungshauptverteilungen (NSHV) dienen der Energieverteilung in Gebäuden und Industrieanlagen.",
+    "SIVACON S8 bietet höchste Sicherheit durch typgeprüfte Standardmodule.",
+    "ALPHA 3200 Systeme sind optimiert für einfache Planung und Montage."
+  ]
+}

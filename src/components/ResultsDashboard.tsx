@@ -1,0 +1,371 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { SwitchgearData, SystemRecommendation } from '../types';
+import { evaluateSystem } from '../utils/evaluation';
+import { ConfigModal } from './ConfigModal';
+import { 
+  Zap, Shield, Ruler, FileText, CheckCircle2, 
+  AlertCircle, Box, Activity, Hash, Settings, ChevronRight, ListChecks
+} from 'lucide-react';
+import { motion } from 'motion/react';
+import { useLanguage } from '../contexts/LanguageContext';
+
+import { SystemComparison } from './SystemComparison';
+
+interface ResultsDashboardProps {
+  initialData: SwitchgearData;
+  file?: File | null;
+}
+
+export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData, file }) => {
+  const { language, t } = useLanguage();
+  const [data, setData] = useState<SwitchgearData>(initialData);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pdfPage, setPdfPage] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string | null>(null);
+  const [pdfBaseUrl, setPdfBaseUrl] = useState<string>('');
+  const [knowledge, setKnowledge] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/data/siemens-nshv.json')
+      .then(res => res.json())
+      .then(data => setKnowledge(data))
+      .catch(err => console.error("Failed to load knowledge:", err));
+  }, []);
+
+  useEffect(() => {
+    if (file && file.type === 'application/pdf') {
+      const url = URL.createObjectURL(file);
+      setPdfBaseUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [file]);
+
+  const pdfSrc = useMemo(() => {
+    if (!pdfBaseUrl) return null;
+    let url = pdfBaseUrl;
+    const params = [];
+    if (pdfPage) params.push(`page=${pdfPage}`);
+    if (searchQuery) {
+      // Standard PDF open parameters support search="phrase"
+      params.push(`search=${encodeURIComponent(`"${searchQuery}"`)}`);
+    }
+    
+    if (params.length > 0) {
+      url += `#${params.join('&')}`;
+    }
+    return url;
+  }, [pdfBaseUrl, pdfPage, searchQuery]);
+
+  const handlePageClick = (page: number | undefined, quote: string) => {
+    if (page) {
+      setPdfPage(page);
+      // Clean up the quote to improve search chances
+      // Truncate to a reasonable length for URL parameters
+      const cleanQuote = quote.replace(/["']/g, '').trim().substring(0, 80);
+      setSearchQuery(cleanQuote);
+    }
+  };
+
+  const evaluation = evaluateSystem(data, language);
+
+  const isModified = JSON.stringify(data) !== JSON.stringify(initialData);
+
+  const systemImages: Record<SystemRecommendation, string> = {
+    'ALPHA 3200 eco': '/images/A32-eco.png',
+    'ALPHA 3200 classic': '/images/A32-classic.png',
+    'SIVACON S8': '/images/S8.png'
+  };
+
+  const fieldLabelMap: Record<string, string> = {
+    'current': language === 'de' ? 'Bemessungsstrom (In)' : 'Rated current (In)',
+    'bemessungsstrom': language === 'de' ? 'Bemessungsstrom (In)' : 'Rated current (In)',
+    'icw': language === 'de' ? 'Kurzschlussstrom (Icw)' : 'Short-circuit current (Icw)',
+    'kurzschlussstrom': language === 'de' ? 'Kurzschlussstrom (Icw)' : 'Short-circuit current (Icw)',
+    'voltage': language === 'de' ? 'Spannung (Ue)' : 'Voltage (Ue)',
+    'spannung': language === 'de' ? 'Spannung (Ue)' : 'Voltage (Ue)',
+    'ip': language === 'de' ? 'Schutzart (IP)' : 'Protection class (IP)',
+    'schutzart': language === 'de' ? 'Schutzart (IP)' : 'Protection class (IP)',
+    'form': language === 'de' ? 'Innere Form' : 'Internal form',
+    'innere form': language === 'de' ? 'Innere Form' : 'Internal form',
+    'arcFault': language === 'de' ? 'Störlichtbogenschutz' : 'Arc fault protection',
+    'störlichtbogen': language === 'de' ? 'Störlichtbogenschutz' : 'Arc fault protection',
+    'einschub': language === 'de' ? 'Einschubtechnik' : 'Withdrawable technology',
+    'einschubtechnik': language === 'de' ? 'Einschubtechnik' : 'Withdrawable technology',
+    'mcc': 'Motor Control Center (MCC)',
+    'nj63': language === 'de' ? 'Lasttrennschalter (3NJ63)' : 'Switch disconnector (3NJ63)',
+    'kompensation': language === 'de' ? 'Blindleistungskompensation' : 'Reactive power compensation',
+    'universal': language === 'de' ? 'Universaleinbautechnik' : 'Universal mounting technology',
+    'busbarPosition': language === 'de' ? 'Sammelschienenlage' : 'Busbar position',
+    'sammelschienenlage': language === 'de' ? 'Sammelschienenlage' : 'Busbar position',
+    'uimp': language === 'de' ? 'Stoßspannungsfestigkeit (Uimp)' : 'Impulse withstand voltage (Uimp)',
+    'ui': language === 'de' ? 'Isolationsspannung (Ui)' : 'Insulation voltage (Ui)',
+    'ipk': language === 'de' ? 'Stoßkurzschlussstrom (Ipk)' : 'Peak withstand current (Ipk)',
+    'protectionClass': language === 'de' ? 'Schutzklasse' : 'Protection class',
+    'schutzklasse': language === 'de' ? 'Schutzklasse' : 'Protection class',
+    'height': language === 'de' ? 'Höhe' : 'Height',
+    'base': language === 'de' ? 'Sockel' : 'Base',
+    'width': language === 'de' ? 'Breite' : 'Width',
+    'depth': language === 'de' ? 'Tiefe' : 'Depth',
+    'installationType': language === 'de' ? 'Aufstellart' : 'Installation type'
+  };
+
+  const getFieldLabel = (field: string) => {
+    const lowerField = field.toLowerCase();
+    for (const [key, label] of Object.entries(fieldLabelMap)) {
+      if (lowerField.includes(key.toLowerCase())) return label;
+    }
+    return field;
+  };
+
+  const handleSaveConfig = (newData: SwitchgearData) => {
+    setData(newData);
+    setIsModalOpen(false);
+  };
+
+  const renderCard = (title: React.ReactNode, value: string | number | null, unit: string, icon: React.ReactNode, delay: number) => (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.4 }}
+      className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow"
+    >
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-[11px] font-medium text-slate-500 mb-0.5">{title}</p>
+          <p className="text-xl font-bold text-slate-900 flex items-baseline gap-1">
+            {value !== null && value !== '' ? (
+              <>
+                {value}
+                <span className="text-[11px] font-medium text-slate-400">{unit}</span>
+              </>
+            ) : (
+              <span className="text-sm font-normal text-slate-300 italic">N/A</span>
+            )}
+          </p>
+        </div>
+        <div className="p-2 bg-[#009999]/10 rounded-lg text-[#009999]">
+          {icon}
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  return (
+    <div className="space-y-8">
+      {/* Top Row */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm xl:col-span-6 flex flex-col"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold text-slate-900 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-[#009999] mr-2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" x2="9" y1="1" y2="4"></line><line x1="15" x2="15" y1="1" y2="4"></line><line x1="9" x2="9" y1="20" y2="23"></line><line x1="15" x2="15" y1="20" y2="23"></line><line x1="20" x2="23" y1="9" y2="9"></line><line x1="20" x2="23" y1="14" y2="14"></line><line x1="1" x2="4" y1="9" y2="9"></line><line x1="1" x2="4" y1="14" y2="14"></line></svg>
+              {language === 'de' ? 'Erkannte Anforderungen NSHV' : 'Detected Switchgear Requirements'}
+            </h3>
+            {isModified && (
+              <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-1 rounded-full border border-yellow-200">
+                {language === 'de' ? 'manuelle Änderungen aktiv' : 'manual changes active'}
+              </span>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
+            {renderCard(<> {language === 'de' ? 'Bemessungsstrom' : 'Rated current'} (I<sub>n</sub>)</>, data.current, 'A', <Activity className="w-5 h-5" />, 0.1)}
+            {renderCard(<> {language === 'de' ? 'Kurzschlussstrom' : 'Short-circuit current'} (I<sub>cw</sub>)</>, data.icw, 'kA', <AlertCircle className="w-5 h-5" />, 0.2)}
+            {renderCard(<> {language === 'de' ? 'Spannung' : 'Voltage'} (U<sub>e</sub>)</>, data.voltage, 'V', <Zap className="w-5 h-5" />, 0.3)}
+            {renderCard(language === 'de' ? 'Schutzart (IP)' : 'Protection class (IP)', data.ip, '', <Shield className="w-5 h-5" />, 0.4)}
+            {renderCard(language === 'de' ? 'Innere Form' : 'Internal form', data.form, '', <Box className="w-5 h-5" />, 0.5)}
+          </div>
+
+          <div className="pt-6 border-t border-slate-100 mt-auto">
+            <div className="flex items-center mb-4">
+              <ListChecks className="w-5 h-5 mr-2 text-slate-700" />
+              <h4 className="text-base font-semibold text-slate-900">{language === 'de' ? 'Spezielle Anforderungen' : 'Special Requirements'}</h4>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: 'arcFault', label: language === 'de' ? 'Störlichtbogenschutz' : 'Arc fault protection' },
+                { key: 'einschub', label: language === 'de' ? 'Einschubtechnik' : 'Withdrawable technology' },
+                { key: 'mcc', label: 'Motor Controll Center (MCC)' },
+                { key: 'nj63', label: language === 'de' ? 'Lasttrennschalter mit Sicherungen (3NJ63)' : 'Switch disconnectors with fuses (3NJ63)' },
+                { key: 'kompensation', label: language === 'de' ? 'Blindleistungskompensation' : 'Reactive power compensation' },
+                { key: 'universal', label: language === 'de' ? 'Universaleinbautechnik' : 'Universal mounting technology' }
+              ]
+              .filter(({ key }) => data.features[key as keyof typeof data.features])
+              .map(({ key, label }) => (
+                <span 
+                  key={key} 
+                  className="px-3 py-1.5 rounded-full text-sm font-medium border bg-[#009999]/10 text-[#009999] border-[#009999]/20"
+                >
+                  {label}
+                </span>
+              ))}
+              
+              {Object.values(data.features).every(v => !v) && (
+                <span className="text-sm text-slate-500 italic p-3 bg-slate-50 rounded-xl border border-slate-100 w-full">
+                  {language === 'de' ? 'Keine speziellen Anforderungen gefunden.' : 'No special requirements found.'}
+                </span>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Right Column: Recommendation */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="bg-slate-900 rounded-2xl p-0.5 shadow-xl xl:col-span-6 flex flex-col h-full"
+        >
+          <div className="bg-slate-800 rounded-[14px] p-5 flex-1 flex flex-col relative overflow-hidden">
+            {/* Decorative background element */}
+            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-[#009999] opacity-20 blur-3xl rounded-full pointer-events-none"></div>
+            
+            <div className="relative z-10 flex flex-col h-full">
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-2xl font-bold text-white">
+                  {evaluation.system}
+                </h2>
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold bg-[#009999]/20 text-[#00cccc] border border-[#009999]/30">
+                  {t.dashboard.recommendation}
+                </span>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-6 mb-0 flex-1">
+                {/* Image & Button */}
+                <div className="w-full sm:w-2/5 flex flex-col gap-3 self-start">
+                  <div className="rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center relative">
+                    <img 
+                      src={systemImages[evaluation.system]} 
+                      alt={evaluation.system} 
+                      className="w-full h-auto object-contain"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `https://placehold.co/600x450/1e293b/00cccc?text=${encodeURIComponent(evaluation.system)}`;
+                      }}
+                    />
+                  </div>
+                  <button 
+                    onClick={() => setIsModalOpen(true)}
+                    className="w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-medium transition-colors flex items-center justify-center border border-white/10 text-sm"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    {language === 'de' ? 'Konfiguration anpassen' : 'Adjust configuration'}
+                  </button>
+                  {isModified && (
+                    <button 
+                      onClick={() => setData(initialData)}
+                      className="w-full py-2.5 px-4 bg-transparent hover:bg-white/5 text-slate-300 rounded-xl font-medium transition-colors flex items-center justify-center border border-slate-600 text-sm"
+                    >
+                      {language === 'de' ? 'Zurücksetzen' : 'Reset'}
+                    </button>
+                  )}
+                </div>
+                
+                {/* Ausschluss-Logik */}
+                <div className="w-full sm:w-3/5 flex flex-col">
+                  <h4 className="text-sm font-medium text-slate-400 mb-3 uppercase tracking-wider">{language === 'de' ? 'Ausschluss-Logik' : 'Exclusion Logic'}</h4>
+                  <ul className="space-y-3 overflow-y-auto pr-2 custom-scrollbar max-h-[350px]">
+                    {evaluation.reasons.map((reason, idx) => (
+                      <li key={idx} className="flex items-start text-sm text-slate-300">
+                        <ChevronRight className="w-4 h-4 mr-2 text-[#009999] mt-0.5 shrink-0" />
+                        <span>{reason}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Bottom Row */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        {/* Belegstellen */}
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.6 }}
+          className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm xl:col-span-5 flex flex-col min-h-[400px] xl:h-[calc(100vh-320px)]"
+        >
+          <h3 className="text-base font-semibold text-slate-900 mb-3 flex items-center shrink-0">
+            <CheckCircle2 className="w-4 h-4 mr-2 text-[#009999]" />
+            {t.dashboard.evidence}
+          </h3>
+          <div className="overflow-y-auto flex-1 pr-2 custom-scrollbar">
+            {data.positions && data.positions.length > 0 ? (
+              <ul className="space-y-4">
+                {data.positions.map((pos, idx) => (
+                  <li key={idx} className="p-4 bg-[#009999]/5 border border-[#009999]/10 rounded-xl">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="font-semibold text-sm text-[#009999]">{getFieldLabel(pos.field)}</span>
+                      {pos.page && (
+                        <button 
+                          onClick={() => handlePageClick(pos.page, pos.quote)}
+                          className="text-xs font-medium bg-white hover:bg-slate-50 px-2 py-1 rounded-md text-slate-500 hover:text-[#009999] border border-slate-200 shadow-sm transition-colors cursor-pointer"
+                        >
+                          {t.dashboard.page} {pos.page}
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-700 italic">"{pos.quote}"</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-slate-500 italic p-4 bg-slate-50 rounded-xl border border-slate-100">
+                {language === 'de' ? 'Keine spezifischen Textstellen als Beleg gefunden.' : 'No specific text passages found as evidence.'}
+              </p>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Document Viewer */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm xl:col-span-7 flex flex-col min-h-[400px] xl:h-[calc(100vh-320px)]"
+        >
+          <h3 className="text-base font-semibold text-slate-900 mb-3 flex items-center shrink-0">
+            <FileText className="w-4 h-4 mr-2 text-slate-700" />
+            {language === 'de' ? 'Leistungsverzeichnis (LV)' : 'Bill of Quantities (BoQ)'}
+          </h3>
+          <div className="flex-1 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center relative">
+            {file && file.type === 'application/pdf' && pdfSrc ? (
+              <iframe 
+                key={pdfSrc}
+                src={pdfSrc} 
+                className="w-full h-full border-0 absolute inset-0"
+                title="PDF Viewer"
+              />
+            ) : (
+              <div className="text-center p-8">
+                <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                <p className="text-slate-500 font-medium">{language === 'de' ? 'Vorschau nicht verfügbar' : 'Preview not available'}</p>
+                <p className="text-slate-400 text-sm mt-1">
+                  {file ? (language === 'de' ? 'Nur PDF-Dateien können hier angezeigt werden.' : 'Only PDF files can be displayed here.') : (language === 'de' ? 'Kein Dokument hochgeladen.' : 'No document uploaded.')}
+                </p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
+
+      {/* System Comparison Table */}
+      <SystemComparison knowledge={knowledge} />
+
+      {isModalOpen && (
+        <ConfigModal 
+          data={data} 
+          onSave={handleSaveConfig} 
+          onClose={() => setIsModalOpen(false)} 
+        />
+      )}
+    </div>
+  );
+};
