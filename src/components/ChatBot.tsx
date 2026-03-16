@@ -36,14 +36,14 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
   }, [language]);
 
   useEffect(() => {
-    fetch('/data/siemens-nshv.json')
+    fetch('/api/knowledge')
       .then(res => res.json())
       .then(data => setCurrentKnowledge(data))
       .catch(err => console.error("Failed to load knowledge:", err));
 
-    fetch('/data/system-instruction.txt')
-      .then(res => res.text())
-      .then(text => setSystemInstructions(text))
+    fetch('/api/instructions')
+      .then(res => res.json())
+      .then(data => setSystemInstructions(data.instructions))
       .catch(err => console.error("Failed to load instructions:", err));
   }, []);
 
@@ -119,10 +119,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
                   ${kb.generalKnowledge.map((k: any) => `- ${k}`).join('\n                  ')}
                   
                   Spezifische System-Anweisungen und Produkt-Logik:
-                  ${systemInstructions}
-                  
-                  Verfügbare Kataloge (Referenz):
-                  - LV10-2025.pdf (in /public/catalogs/)`,
+                  ${systemInstructions}`,
                 },
               });
             } catch (error: any) {

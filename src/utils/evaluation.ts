@@ -90,12 +90,6 @@ export const evaluateSystem = (data: SwitchgearData, language: 'de' | 'en' = 'de
       ? `Aufstellart ${installationType} nur mit S8 möglich`
       : `Installation type ${installationType} only possible with S8`);
   }
-  if (width !== null && width < 350 && width > 0) {
-    requiresS8 = true;
-    reasons.push(language === 'de' 
-      ? `Breite < 350mm (${width}mm) nur mit S8 möglich`
-      : `Width < 350mm (${width}mm) only possible with S8`);
-  }
 
   // Check ALPHA 3200 classic
   let requiresClassic = false;
@@ -146,12 +140,6 @@ export const evaluateSystem = (data: SwitchgearData, language: 'de' | 'en' = 'de
     reasons.push(language === 'de' 
       ? `Sammelschienenlage ${busbarPosition} schließt eco aus`
       : `Busbar position ${busbarPosition} excludes eco`);
-  }
-  if (width !== null && width > 1100) {
-    requiresClassic = true;
-    reasons.push(language === 'de' 
-      ? `Breite > 1100mm (${width}mm) schließt eco aus`
-      : `Width > 1100mm (${width}mm) excludes eco`);
   }
 
   let system: SystemRecommendation = 'ALPHA 3200 eco';

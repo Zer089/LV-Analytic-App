@@ -1,3 +1,4 @@
+import { GoogleGenAI, Type } from "@google/genai";
 import { SwitchgearData } from "../types";
 import * as pdfjsLib from 'pdfjs-dist';
 // @ts-ignore
@@ -6,128 +7,204 @@ import workerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 // Configure pdfjs worker for Vite
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
-/**
- * Siemens-Proof Gemini Implementation using native fetch
- * This avoids the @google/genai dependency which is often blocked in internal Artifactory.
- */
-const callGeminiApi = async (model: string, prompt: string, schema: any) => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("GEMINI_API_KEY is not defined");
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: schema
-      }
-    })
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    if (response.status === 429) {
-      throw new Error("QUOTA_EXCEEDED");
-    }
-    throw new Error(errorData.error?.message || `API Error: ${response.status}`);
-  }
-
-  const result = await response.json();
-  return result.candidates?.[0]?.content?.parts?.[0]?.text;
-};
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export const extractSwitchgearData = async (file: File): Promise<SwitchgearData> => {
   try {
     const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+    
     let extractedText = "";
     
     if (isPdf) {
-      extractedText = await extractTextFromPdf(file);
+      try {
+        console.log("Starting PDF extraction...");
+        extractedText = await extractTextFromPdf(file);
+        console.log("PDF extraction successful. Length:", extractedText.length);
+      } catch (pdfError: any) {
+        console.error("Error extracting text from PDF with pdf.js:", pdfError);
+        throw new Error(`Fehler beim lokalen Auslesen der PDF-Datei: ${pdfError.message || 'Unbekannter Fehler'}`);
+      }
     } else {
       try {
+        // GAEB files (.d83, .p83 etc) are often Windows-1252 (ANSI) encoded in Germany
         const isGaebClassic = file.name.toLowerCase().endsWith('.d83') || file.name.toLowerCase().endsWith('.p83');
-        extractedText = await readFileAsText(file, isGaebClassic ? 'ISO-8859-1' : 'UTF-8');
+        if (isGaebClassic) {
+          extractedText = await readFileAsText(file, 'ISO-8859-1');
+        } else {
+          extractedText = await file.text();
+        }
       } catch (err) {
+        console.warn("UTF-8 reading failed, falling back to ISO-8859-1", err);
         extractedText = await readFileAsText(file, 'ISO-8859-1');
       }
     }
 
+    // Truncate text if it's extremely long to avoid token limits (approx 100k chars ~ 25k tokens)
+    // Most LVs are within this range. If longer, we take the first 100k.
     if (extractedText.length > 100000) {
+      console.warn("Text too long, truncating to 100,000 characters to stay within quota limits.");
       extractedText = extractedText.substring(0, 100000) + "... [Text gekürzt]";
     }
     
-    const prompt = `Hier ist der Inhalt eines Leistungsverzeichnisses:\n\n${extractedText}\n\n
-    Bitte analysiere dieses Leistungsverzeichnis und extrahiere alle relevanten technischen Daten für die Schaltanlage (Niederspannungshauptverteilung).
-    Gib die Daten im vorgegebenen JSON-Format zurück. Wenn eine Information nicht gefunden wird, nutze null (für Zahlen) oder "unbekannt" (für Strings).`;
+    const parts = [
+      {
+        text: `Hier ist der Inhalt eines Leistungsverzeichnisses:\n\n${extractedText}`,
+      },
+      {
+        text: `Bitte analysiere dieses Leistungsverzeichnis und extrahiere alle relevanten technischen Daten für die Schaltanlage (Niederspannungshauptverteilung).
+        Achte besonders auf:
+        - Bemessungsstrom (current) in Ampere (A)
+        - Kurzschlussstrom (icw) in kA
+        - Spannung (voltage) in Volt (V)
+        - Schutzart (ip): MUSS einer dieser Werte sein: "IP30", "IP31", "IP40", "IP41", "IP43", "IP54", oder "unbekannt" (wenn nicht gefunden).
+        - Innere Form (form): MUSS einer dieser Werte sein: "1", "2a", "2b", "3a", "3b", "4a", "4b", oder "unbekannt" (wenn nicht gefunden).
+        - Sammelschienenlage (busbarPosition): "Mittig", "Hinten", "Oben", oder "unbekannt"
+        - Bemessungsstoßspannungsfestigkeit (uimp) in kV
+        - Bemessungsisolationsspannung (ui) in V
+        - Bemessungsstoßkurzschlussstrom (ipk) in kA
+        - Schutzklasse (protectionClass): 1, 2, oder null
+        - Höhe (height) in mm
+        - Sockel (base) in mm
+        - Breite (width) in mm
+        - Tiefe (depth) in mm
+        - Aufstellart (installationType): "Wand", "Rücken an Rücken", "Doppelfront", oder "unbekannt"
+        - Features (Booleans): arcFault (Störlichtbogen), einschub (Einschubtechnik), mcc (Motor Control Center), nj63 (3NJ63 Lasttrenner), kompensation (Blindleistungskompensation), universal (Universaleinbautechnik)
+        
+        WICHTIG ZU EINSCHUBTECHNIK: "einschub" bezieht sich ausschließlich auf die Niederspannungshauptverteilung als System (z.B. Abgangsmodule in Einschubtechnik). Leistungsschalter, die lediglich in Einschubtechnik ausgeführt sind, zählen NICHT als "einschub" für das Gesamtsystem.
+        
+        WICHTIG ZU BREITE: Ermittle die Breite (width) ausschließlich für die Belegstellen (positions) und die Datenanzeige. Ignoriere die Breite VOLLSTÄNDIG bei der Systemempfehlung (S8, classic, eco) und erwähne sie auch NICHT in einer Ausschluss-Logik. Die Breite im Dokument bezieht sich oft auf die gesamte Anlage (viele Felder), während die Systemgrenzen sich auf Einzelfelder beziehen. Daher ist die Breite kein valides Kriterium für die Systemwahl.
+        
+        WICHTIG: Für JEDEN extrahierten Wert (Bemessungsstrom, Kurzschlussstrom, Spannung, Schutzart, Innere Form, und jedes gefundene Feature) MUSST du eine Belegstelle (Evidence) im Array "positions" anlegen.
+        Jede Belegstelle muss enthalten:
+        - field: Der Name des Parameters (z.B. "Bemessungsstrom", "Innere Form", "Einschubtechnik")
+        - quote: Der exakte Textausschnitt aus dem Dokument, der diesen Wert belegt.
+        - page: Die Seitenzahl, auf der der Text gefunden wurde (suche nach den "--- SEITE X ---" Markierungen im Text).
+        
+        Gib die Daten im vorgegebenen JSON-Format zurück. Wenn eine Information nicht gefunden wird, nutze null (für Zahlen) oder "unbekannt" (für Strings). Nutze NIEMALS ausgedachte Standardwerte.`
+      }
+    ];
 
-    const schema = {
-      type: "object",
-      properties: {
-        current: { type: "number" },
-        icw: { type: "number" },
-        voltage: { type: "number" },
-        ip: { type: "string" },
-        form: { type: "string" },
-        busbarPosition: { type: "string" },
-        uimp: { type: "number" },
-        ui: { type: "number" },
-        ipk: { type: "number" },
-        protectionClass: { type: "number" },
-        height: { type: "number" },
-        base: { type: "number" },
-        width: { type: "number" },
-        depth: { type: "number" },
-        installationType: { type: "string" },
-        features: {
-          type: "object",
-          properties: {
-            arcFault: { type: "boolean" },
-            einschub: { type: "boolean" },
-            mcc: { type: "boolean" },
-            nj63: { type: "boolean" },
-            kompensation: { type: "boolean" },
-            universal: { type: "boolean" }
-          }
-        },
-        positions: { 
-          type: "array", 
-          items: { 
-            type: "object",
+    console.log(`Sending ${extractedText.length} characters to Gemini...`);
+
+    let response;
+    const config = {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          current: { type: Type.NUMBER, description: "Bemessungsstrom in Ampere" },
+          icw: { type: Type.NUMBER, description: "Kurzschlussstrom in kA" },
+          voltage: { type: Type.NUMBER, description: "Spannung in Volt" },
+          ip: { type: Type.STRING, description: "Schutzart (z.B. 'IP31')" },
+          form: { type: Type.STRING, description: "Innere Form (z.B. 'Form 4b')" },
+          busbarPosition: { type: Type.STRING, description: "Sammelschienenlage" },
+          uimp: { type: Type.NUMBER, description: "Bemessungsstoßspannungsfestigkeit in kV" },
+          ui: { type: Type.NUMBER, description: "Bemessungsisolationsspannung in V" },
+          ipk: { type: Type.NUMBER, description: "Bemessungsstoßkurzschlussstrom in kA" },
+          protectionClass: { type: Type.NUMBER, description: "Schutzklasse" },
+          height: { type: Type.NUMBER, description: "Höhe in mm" },
+          base: { type: Type.NUMBER, description: "Sockel in mm" },
+          width: { type: Type.NUMBER, description: "Breite in mm" },
+          depth: { type: Type.NUMBER, description: "Tiefe in mm" },
+          installationType: { type: Type.STRING, description: "Aufstellart" },
+          features: {
+            type: Type.OBJECT,
             properties: {
-              field: { type: "string" },
-              quote: { type: "string" },
-              page: { type: "number" }
+              arcFault: { type: Type.BOOLEAN, description: "Störlichtbogen" },
+              einschub: { type: Type.BOOLEAN, description: "Einschubtechnik" },
+              mcc: { type: Type.BOOLEAN, description: "Motor Control Center" },
+              nj63: { type: Type.BOOLEAN, description: "3NJ63 Lasttrenner" },
+              kompensation: { type: Type.BOOLEAN, description: "Blindleistungskompensation" },
+              universal: { type: Type.BOOLEAN, description: "Universaleinbautechnik" }
             }
+          },
+          positions: { 
+            type: Type.ARRAY, 
+            items: { 
+              type: Type.OBJECT,
+              properties: {
+                field: { type: Type.STRING, description: "Name des Parameters" },
+                quote: { type: Type.STRING, description: "Exakter Textausschnitt" },
+                page: { type: Type.NUMBER, description: "Seitenzahl" }
+              }
+            }, 
+            description: "Zitate aus dem LV als Beleg für JEDEN gefundenen Wert, inkl. Seitenzahl." 
           }
         }
       }
     };
 
-    let responseText;
-    const models = ["gemini-3-flash-preview", "gemini-2.5-flash-latest", "gemini-3.1-flash-lite-preview"];
-    
-    let lastError;
-    for (const model of models) {
+    try {
+      // Helper for retrying with delay
+      const generateWithRetry = async (modelName: string, maxRetries = 2) => {
+        let lastError;
+        for (let i = 0; i <= maxRetries; i++) {
+          try {
+            return await ai.models.generateContent({
+              model: modelName,
+              contents: { parts },
+              config
+            });
+          } catch (error: any) {
+            lastError = error;
+            const isQuotaError = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota');
+            if (isQuotaError && i < maxRetries) {
+              const delay = (i + 1) * 2000; // 2s, 4s delay
+              console.warn(`Quota exceeded for ${modelName}, retrying in ${delay}ms... (Attempt ${i + 1}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            } else {
+              throw error;
+            }
+          }
+        }
+        throw lastError;
+      };
+
       try {
-        responseText = await callGeminiApi(model, prompt, schema);
-        if (responseText) break;
+        // Try with Gemini 3 Flash first (Best for complex extraction)
+        response = await generateWithRetry("gemini-3-flash-preview");
       } catch (error: any) {
-        lastError = error;
-        if (error.message === "QUOTA_EXCEEDED") continue;
-        throw error;
+        const isQuotaError = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('quota');
+        if (isQuotaError) {
+          console.warn("Rate limit reached for gemini-3-flash-preview, falling back to gemini-2.5-flash-latest...");
+          try {
+            // Fallback 1: Gemini 2.5 Flash
+            response = await generateWithRetry("gemini-2.5-flash-latest");
+          } catch (fallbackError: any) {
+            const isQuotaError2 = fallbackError?.status === 429 || fallbackError?.message?.includes('429') || fallbackError?.message?.includes('quota');
+            if (isQuotaError2) {
+              console.warn("Rate limit reached for gemini-2.5-flash-latest, falling back to gemini-3.1-flash-lite-preview (High Quota)...");
+              // Fallback 2: Gemini 3.1 Flash Lite (500 RPD)
+              response = await generateWithRetry("gemini-3.1-flash-lite-preview");
+            } else {
+              throw fallbackError;
+            }
+          }
+        } else {
+          throw error;
+        }
       }
+    } catch (error: any) {
+      console.error("Error in extractSwitchgearData:", error);
+      if (error?.message?.includes('quota') || error?.status === 429) {
+        throw new Error("Die KI-Quote wurde überschritten. Bitte warten Sie eine Minute und versuchen Sie es erneut.");
+      }
+      throw error;
     }
 
-    if (!responseText) throw lastError || new Error("Keine Antwort von der KI erhalten");
+    console.log("Raw Gemini Response:", response.text);
     
-    const rawData = JSON.parse(responseText);
+    let jsonStr = response.text || "{}";
+    // Remove markdown code blocks if present
+    if (jsonStr.startsWith("```json")) {
+      jsonStr = jsonStr.replace(/^```json\n/, "").replace(/\n```$/, "");
+    } else if (jsonStr.startsWith("```")) {
+      jsonStr = jsonStr.replace(/^```\n/, "").replace(/\n```$/, "");
+    }
     
+    const rawData = JSON.parse(jsonStr);
+    
+    // Apply fallbacks
     return {
       current: rawData.current ?? null,
       icw: rawData.icw ?? null,
@@ -155,11 +232,8 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
       },
       positions: rawData.positions || []
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error in extractSwitchgearData:", error);
-    if (error.message === "QUOTA_EXCEEDED") {
-      throw new Error("Die KI-Quote wurde überschritten. Bitte warten Sie eine Minute.");
-    }
     throw error;
   }
 };
@@ -177,11 +251,13 @@ const extractTextFromPdf = async (file: File): Promise<string> => {
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
   let fullText = '';
+
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const textContent = await page.getTextContent();
-    const pageText = textContent.items.map((item: any) => (item as any).str).join(' ');
+    const pageText = textContent.items.map((item: any) => item.str).join(' ');
     fullText += `\n--- SEITE ${i} ---\n` + pageText + '\n';
   }
+
   return fullText;
 };

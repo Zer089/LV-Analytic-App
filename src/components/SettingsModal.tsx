@@ -27,7 +27,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
   const fetchKnowledge = async () => {
     try {
-      const response = await fetch('/data/siemens-nshv.json');
+      const response = await fetch('/api/knowledge');
       const data = await response.json();
       setKnowledge(data);
     } catch (err) {
@@ -46,14 +46,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   };
 
   const handleSave = async () => {
-    // Check if we are on GitLab Pages (static hosting)
-    if (window.location.hostname.includes('code.siemens.com') || window.location.hostname.includes('gitlab.io')) {
-      alert(language === 'de' 
-        ? 'Speichern ist auf GitLab Pages nicht möglich, da es sich um eine statische Seite handelt. Bitte bearbeiten Sie die Datei siemens-nshv.json direkt im Repository.' 
-        : 'Saving is not possible on GitLab Pages as it is a static site. Please edit the siemens-nshv.json file directly in the repository.');
-      return;
-    }
-
     setIsSaving(true);
     try {
       const response = await fetch('/api/knowledge', {

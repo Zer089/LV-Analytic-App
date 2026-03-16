@@ -15,7 +15,6 @@
       "Schutzklasse": "1",
       "Höhe": "2000 mm",
       "Sockel": "100 / 200 mm",
-      "Breite": "350 … 1100 mm",
       "Tiefe": "400 / 600 mm",
       "Aufstellart": "Wand/Rücken an Rücken",
       "Störlichtbogenklasse": "Ohne",
@@ -38,7 +37,6 @@
       "Schutzklasse": "1",
       "Höhe": "2000 mm",
       "Sockel": "100 / 200 mm",
-      "Breite": "350 … 1400 mm",
       "Tiefe": "600 mm",
       "Aufstellart": "Wand/Rücken an Rücken",
       "Störlichtbogenklasse": "Ohne / Auf Anfrage: A - Personenschutz",
@@ -61,7 +59,6 @@
       "Schutzklasse": "1",
       "Höhe": "2000 / 2200 mm",
       "Sockel": "100 / 200 mm",
-      "Breite": "200 … 1400 mm",
       "Tiefe": "500 … 1200 mm",
       "Aufstellart": "Wand/Rücken an Rücken/Doppelfront",
       "Störlichtbogenklasse": "Ohne / A - Personenschutz, C - Erw. Personen- + Anlagenschutz (Feld) / C - Erw. Personen- + Anlagenschutz (Abteil)",
@@ -83,8 +80,7 @@
         "Einschubtechnik gefordert",
         "Motor Control Center (MCC) gefordert",
         "Aufstellart Doppelfront gefordert",
-        "Höhe > 2000mm (bis 2200mm)",
-        "Breite < 350mm (bis 200mm)"
+        "Höhe > 2000mm (bis 2200mm)"
       ],
       "description": "Hochleistungs-Schaltanlage für anspruchsvolle Industrieanwendungen."
     },
@@ -96,7 +92,6 @@
         "Blindleistungskompensation gefordert",
         "Abgangsfeld Universaleinbautechnik gefordert",
         "Sammelschienenlage hinten",
-        "Breite > 1100mm (bis 1400mm)",
         "Tiefe > 400mm (Standard 600mm)"
       ],
       "description": "Vielseitige Schaltanlage für Infrastruktur und Gebäude."

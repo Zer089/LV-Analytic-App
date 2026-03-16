@@ -26,7 +26,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
   const [knowledge, setKnowledge] = useState<any>(null);
 
   useEffect(() => {
-    fetch('/data/siemens-nshv.json')
+    fetch('/api/knowledge')
       .then(res => res.json())
       .then(data => setKnowledge(data))
       .catch(err => console.error("Failed to load knowledge:", err));
