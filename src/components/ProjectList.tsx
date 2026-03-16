@@ -419,9 +419,9 @@ export const ProjectList: React.FC<ProjectListProps> = ({
                   >
                     <div className="flex items-center justify-end">{t.projects.fields.totalRevenue} <SortIcon field="totalRevenue" /></div>
                   </th>
-                  <th className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
+                  <th className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]" title={t.projects.fields.sieSalesMaintained}>
                     <div className="flex items-center justify-center">
-                      <img src="/public/images/SieSales.png" alt="SieSales" className="h-4 w-auto" title={t.projects.fields.sieSalesMaintained} />
+                      {t.projects.fields.sieSalesShort}
                     </div>
                   </th>
                   <th className="sticky top-0 z-20 px-3 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider text-center bg-slate-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">{t.projects.fields.actions}</th>
