@@ -114,6 +114,8 @@ export const translations = {
       knowledgeSubtitle: 'Hier können Sie allgemeine Fakten und Logik für den Chatbot hinterlegen.',
       addKnowledgePlaceholder: 'Neues Wissen hinzufügen...',
       saveKnowledge: 'Wissensbasis speichern',
+      adminArea: 'Admin-Bereich',
+      aboutTool: 'Über dieses Tool',
     },
     dashboard: {
       parameters: 'Extrahierte Parameter',
@@ -132,6 +134,8 @@ export const translations = {
       newAnalysis: 'New Analysis',
       projects: 'All Projects',
       settings: 'Settings',
+      adminArea: 'Admin Area',
+      aboutTool: 'About this tool',
     },
     projects: {
       projectsTitle: 'Projects',
@@ -237,6 +241,8 @@ export const translations = {
       knowledgeSubtitle: 'Here you can store general facts and logic for the chatbot.',
       addKnowledgePlaceholder: 'Add new knowledge...',
       saveKnowledge: 'Save Knowledge Base',
+      adminArea: 'Admin Area',
+      aboutTool: 'About this tool',
     },
     dashboard: {
       parameters: 'Extracted Parameters',

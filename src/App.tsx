@@ -264,7 +264,7 @@ export default function App() {
       
       <div className="relative z-10 flex flex-col h-screen overflow-hidden">
         {/* Header */}
-        <header className="bg-[#009999] text-white sticky top-0 z-20 shadow-md">
+        <header className="bg-[#009999] text-white sticky top-0 z-50 shadow-md">
         <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             {/* Siemens-like Logo Placeholder */}
@@ -275,7 +275,7 @@ export default function App() {
             <div className="hidden sm:flex flex-col">
               <h1 className="text-sm font-semibold tracking-wide flex items-center gap-2">
                 {t.header.title}
-                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.11.2</span>
+                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.11.5</span>
               </h1>
               <span className="text-[10px] text-white/80 tracking-wider">{t.header.subtitle}</span>
             </div>
@@ -285,8 +285,8 @@ export default function App() {
               onClick={() => setView('upload')}
               className="text-sm font-medium text-white/90 hover:text-white flex items-center transition-colors bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg"
             >
-              <Plus className="w-4 h-4 mr-1.5" />
-              {t.header.newAnalysis}
+              <Plus className="w-4 h-4 sm:mr-1.5" />
+              <span className="hidden sm:inline">{t.header.newAnalysis}</span>
             </button>
 
             {/* Language Switcher */}
@@ -344,7 +344,7 @@ export default function App() {
                         className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-3 transition-colors"
                       >
                         <Lock className="w-4 h-4 text-slate-400" />
-                        <span>Admin-Bereich</span>
+                        <span>{t.settings.adminArea}</span>
                       </button>
 
                       <div className="h-px bg-slate-100 my-1 mx-2" />
@@ -356,8 +356,10 @@ export default function App() {
                         }}
                         className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-3 transition-colors"
                       >
-                        <Info className="w-4 h-4 text-slate-400" />
-                        <span>Über dieses Tool</span>
+                        <div className="flex items-center gap-3">
+                          <Info className="w-4 h-4 text-slate-400" />
+                          <span>{t.settings.aboutTool}</span>
+                        </div>
                       </button>
                     </motion.div>
                   </>
@@ -505,7 +507,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
+              <div className="flex-1 flex flex-col min-h-0 pr-1 overflow-y-auto custom-scrollbar">
                 <ResultsDashboard initialData={data} file={file} />
               </div>
               <ChatBot data={data} />
@@ -544,7 +546,7 @@ export default function App() {
               <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-[#009999] text-white">
                 <div className="flex items-center gap-3">
                   <Info className="w-5 h-5" />
-                  <h2 className="text-xl font-bold">Über dieses Tool</h2>
+                  <h2 className="text-xl font-bold">{t.settings.aboutTool}</h2>
                 </div>
                 <button 
                   onClick={() => setIsAboutModalOpen(false)}
@@ -591,7 +593,7 @@ export default function App() {
                 </div>
 
                 <div className="pt-6 text-center">
-                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Version 2.11.2</p>
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Version 2.11.5</p>
                 </div>
               </div>
 
@@ -600,7 +602,7 @@ export default function App() {
                   onClick={() => setIsAboutModalOpen(false)}
                   className="px-6 py-2 bg-[#009999] text-white font-bold rounded-xl hover:bg-[#008888] transition-all shadow-lg shadow-[#009999]/20"
                 >
-                  Schließen
+                  {t.settings.close}
                 </button>
               </div>
             </motion.div>
