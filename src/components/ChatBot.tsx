@@ -36,12 +36,12 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
   }, [language]);
 
   useEffect(() => {
-    fetch('/data/siemens-nshv.json')
+    fetch('/api/knowledge')
       .then(res => res.json())
       .then(data => setCurrentKnowledge(data))
       .catch(err => console.error("Failed to load knowledge:", err));
 
-    fetch('/data/system-instruction.txt')
+    fetch('/api/instructions')
       .then(res => res.text())
       .then(text => setSystemInstructions(text))
       .catch(err => console.error("Failed to load instructions:", err));

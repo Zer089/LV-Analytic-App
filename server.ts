@@ -29,12 +29,12 @@ async function startServer() {
       const instructionPath = path.join(__dirname, "src", "knowledge", "system-instruction.txt");
       if (fs.existsSync(instructionPath)) {
         const data = fs.readFileSync(instructionPath, "utf-8");
-        res.json({ instructions: data });
+        res.send(data);
       } else {
-        res.json({ instructions: "" });
+        res.send("");
       }
     } catch (error) {
-      res.status(500).json({ error: "Failed to load instructions" });
+      res.status(500).send("Failed to load instructions");
     }
   });
 
