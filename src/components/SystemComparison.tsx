@@ -37,7 +37,7 @@ export const SystemComparison: React.FC<SystemComparisonProps> = ({ knowledge })
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-slate-100">
-              <th className="py-3 px-4 text-xs font-bold text-slate-400 uppercase tracking-wider sticky left-0 bg-white z-10">
+              <th className="py-3 px-4 text-xs font-bold text-slate-400 tracking-wider sticky left-0 bg-white z-10">
                 {language === 'de' ? 'Parameter' : 'Parameter'}
               </th>
               {systems.map(system => (

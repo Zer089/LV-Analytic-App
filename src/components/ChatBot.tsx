@@ -184,7 +184,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
                   <h3 className="font-bold text-sm">{t.chatbot.expertName}</h3>
                   <div className="flex items-center">
                     <div className="w-2 h-2 bg-emerald-400 rounded-full mr-2 animate-pulse"></div>
-                    <span className="text-[10px] text-white/80 uppercase tracking-wider font-medium">{t.chatbot.online}</span>
+                    <span className="text-[10px] text-white/80 tracking-wider font-medium">{t.chatbot.online}</span>
                   </div>
                 </div>
               </div>

@@ -267,7 +267,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
                 
                 {/* Ausschluss-Logik */}
                 <div className="w-full sm:w-3/5 flex flex-col">
-                  <h4 className="text-sm font-medium text-slate-400 mb-3 uppercase tracking-wider">{language === 'de' ? 'Ausschluss-Logik' : 'Exclusion Logic'}</h4>
+                  <h4 className="text-sm font-medium text-slate-400 mb-3 tracking-wider">{language === 'de' ? 'Ausschluss-Logik' : 'Exclusion Logic'}</h4>
                   <ul className="space-y-3 overflow-y-auto pr-2 custom-scrollbar max-h-[350px]">
                     {evaluation.reasons.map((reason, idx) => (
                       <li key={idx} className="flex items-start text-sm text-slate-300">

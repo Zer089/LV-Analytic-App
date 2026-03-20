@@ -50,7 +50,7 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ data, onSave, onClose 
         
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div>
-            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">{language === 'de' ? 'BASIS-PARAMETER' : 'BASIC PARAMETERS'}</h3>
+            <h3 className="text-sm font-bold text-slate-400 tracking-wider mb-4">{language === 'de' ? 'BASIS-PARAMETER' : 'BASIC PARAMETERS'}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">{language === 'de' ? 'Bemessungsstrom' : 'Rated current'} I<sub>n</sub> (A)</label>

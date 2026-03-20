@@ -8,8 +8,13 @@ import { ProjectForm } from './components/ProjectForm';
 import { extractSwitchgearData } from './services/geminiService';
 import { projectService } from './services/projectService';
 import { SwitchgearData, Project } from './types';
-import { Loader2, FileText, ArrowLeft, Settings, Activity, Globe, Folder, Plus, Edit2, CheckCircle2 } from 'lucide-react';
+import { 
+  Loader2, FileText, ArrowLeft, Settings, Activity, Globe, Folder, Plus, 
+  Edit2, CheckCircle2, FileSpreadsheet, Info, Lock, ChevronDown, Mail, 
+  Phone, Smartphone, ExternalLink, X, MapPin 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import * as XLSX from 'xlsx';
 
 import { SettingsModal } from './components/SettingsModal';
 import { useLanguage } from './contexts/LanguageContext';
@@ -28,7 +33,38 @@ export default function App() {
   const [data, setData] = useState<SwitchgearData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
+
+  const handleExport = () => {
+    const exportData = projects.map(p => ({
+      [t.projects.fields.entryDateShort]: p.entryDate,
+      [t.projects.fields.customerShort]: p.customer,
+      [t.projects.fields.projectTitle]: p.projectTitle,
+      [t.projects.fields.vbShort]: p.vb,
+      [t.projects.fields.region]: p.region,
+      [t.projects.fields.partnership]: p.partnership,
+      [t.projects.fields.editor]: p.editor,
+      [t.projects.fields.plannedSystem]: p.plannedSystem,
+      [t.projects.fields.panelCount]: p.panelCount,
+      [t.projects.fields.revenueP310]: p.revenueP310,
+      [t.projects.fields.revenueP360]: p.revenueP360,
+      [t.projects.fields.totalRevenue]: p.totalRevenue,
+      [t.projects.fields.opportunity]: p.opportunity,
+      [t.projects.fields.sieSalesMaintained]: p.sieSalesMaintained ? 'Ja' : 'Nein',
+      [t.projects.fields.tenderedBrand]: p.tenderedBrand,
+      [t.projects.fields.remarks]: p.remarks,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Projects");
+    
+    const date = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `Projekte_Export_${date}.xlsx`);
+    setIsSettingsDropdownOpen(false);
+  };
 
   useEffect(() => {
     const loadProjects = async () => {
@@ -239,9 +275,9 @@ export default function App() {
             <div className="hidden sm:flex flex-col">
               <h1 className="text-sm font-semibold tracking-wide flex items-center gap-2">
                 {t.header.title}
-                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.10.10</span>
+                <span className="bg-white/20 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">v2.11.2</span>
               </h1>
-              <span className="text-[10px] text-white/80 uppercase tracking-wider">{t.header.subtitle}</span>
+              <span className="text-[10px] text-white/80 tracking-wider">{t.header.subtitle}</span>
             </div>
           </div>
           <div className="flex items-center space-x-4">
@@ -269,13 +305,65 @@ export default function App() {
               </button>
             </div>
 
-            <button 
-              onClick={() => setIsSettingsOpen(true)}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-              title={t.header.settings}
-            >
-              <Settings className="w-5 h-5" />
-            </button>
+            <div className="relative">
+              <button 
+                onClick={() => setIsSettingsDropdownOpen(!isSettingsDropdownOpen)}
+                className={`flex items-center gap-2 p-2 rounded-lg transition-colors ${isSettingsDropdownOpen ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                title={t.header.settings}
+              >
+                <Settings className="w-5 h-5" />
+                <ChevronDown className={`w-4 h-4 transition-transform ${isSettingsDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {isSettingsDropdownOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-30" 
+                      onClick={() => setIsSettingsDropdownOpen(false)}
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-40 text-slate-700"
+                    >
+                      <button
+                        onClick={handleExport}
+                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                      >
+                        <FileSpreadsheet className="w-4 h-4 text-[#009999]" />
+                        <span>{t.projects.exportExcel}</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          setIsSettingsOpen(true);
+                          setIsSettingsDropdownOpen(false);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                      >
+                        <Lock className="w-4 h-4 text-slate-400" />
+                        <span>Admin-Bereich</span>
+                      </button>
+
+                      <div className="h-px bg-slate-100 my-1 mx-2" />
+
+                      <button
+                        onClick={() => {
+                          setIsAboutModalOpen(true);
+                          setIsSettingsDropdownOpen(false);
+                        }}
+                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                      >
+                        <Info className="w-4 h-4 text-slate-400" />
+                        <span>Über dieses Tool</span>
+                      </button>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </header>
@@ -442,6 +530,83 @@ export default function App() {
         isOpen={isSettingsOpen} 
         onClose={() => setIsSettingsOpen(false)} 
       />
+
+      {/* About Modal */}
+      <AnimatePresence>
+        {isAboutModalOpen && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-[#009999] text-white">
+                <div className="flex items-center gap-3">
+                  <Info className="w-5 h-5" />
+                  <h2 className="text-xl font-bold">Über dieses Tool</h2>
+                </div>
+                <button 
+                  onClick={() => setIsAboutModalOpen(false)}
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="p-8 text-slate-700 space-y-6">
+                <div className="space-y-1">
+                  <p className="font-bold text-lg text-[#009999]">Siemens AG</p>
+                  <p className="font-medium">Siemens Deutschland</p>
+                  <p>Smart Infrastructure</p>
+                  <p>Panel Builder</p>
+                  <p className="text-slate-500 text-sm">RC-DE SI EP INF PB</p>
+                </div>
+
+                <div className="space-y-3 pt-4 border-t border-slate-100">
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-slate-400 mt-0.5" />
+                    <p>Siemenspromenade 2<br />91058 Erlangen, Deutschland</p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-5 h-5 text-slate-400" />
+                    <a href="tel:+4991311755466" className="hover:text-[#009999] transition-colors">+49 (9131) 17-55466</a>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Smartphone className="w-5 h-5 text-slate-400" />
+                    <a href="tel:+491729408230" className="hover:text-[#009999] transition-colors">+49 (172) 9408230</a>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-5 h-5 text-slate-400" />
+                    <a href="mailto:schreiber.andreas@siemens.com" className="hover:text-[#009999] transition-colors font-medium">schreiber.andreas@siemens.com</a>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <ExternalLink className="w-5 h-5 text-slate-400" />
+                    <a href="https://www.siemens.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#009999] transition-colors">www.siemens.com</a>
+                  </div>
+                </div>
+
+                <div className="pt-6 text-center">
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Version 2.11.2</p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button
+                  onClick={() => setIsAboutModalOpen(false)}
+                  className="px-6 py-2 bg-[#009999] text-white font-bold rounded-xl hover:bg-[#008888] transition-all shadow-lg shadow-[#009999]/20"
+                >
+                  Schließen
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       </div>
     </div>
   );
