@@ -1,0 +1,12 @@
+pages:
+  stage: deploy
+  script:
+    # Wir löschen einen eventuell alten public Ordner
+    - rm -rf public
+    # Wir nehmen den bereits fertigen 'dist' Ordner, den wir hochgeladen haben
+    - mv dist public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
