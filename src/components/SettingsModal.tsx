@@ -27,7 +27,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
 
   const fetchKnowledge = async () => {
     try {
-      const response = await fetch('./siemens-nshv.json');
+      const response = await fetch('./siemens-nshv.json', { cache: 'no-store' });
       const data = await response.json();
       setKnowledge(data);
     } catch (err) {

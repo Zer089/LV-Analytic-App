@@ -4,6 +4,8 @@ import { MessageSquare, Send, X, Bot, User, Loader2, Sparkles, Maximize2, Minimi
 import { GoogleGenAI } from "@google/genai";
 import ReactMarkdown from 'react-markdown';
 import { useLanguage } from '../contexts/LanguageContext';
+import { SystemKnowledge } from '../types';
+import { loadSystemKnowledge } from '../utils/evaluation';
 
 interface Message {
   role: 'user' | 'model';
@@ -24,7 +26,7 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
     { role: 'model', text: t.chatbot.welcome }
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentKnowledge, setCurrentKnowledge] = useState<any>(null);
+  const [currentKnowledge, setCurrentKnowledge] = useState<SystemKnowledge | null>(null);
   const [systemInstructions, setSystemInstructions] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -36,10 +38,9 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
   }, [language]);
 
   useEffect(() => {
-    fetch('./siemens-nshv.json')
-      .then(res => res.json())
-      .then(data => setCurrentKnowledge(data))
-      .catch(err => console.error("Failed to load knowledge:", err));
+    loadSystemKnowledge()
+      .then((kb) => setCurrentKnowledge(kb))
+      .catch((err) => console.error('Failed to load knowledge:', err));
 
     fetch('./system-instruction.txt')
       .then(res => res.text())
@@ -94,12 +95,33 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
         // 3. Gemini 2.5 Flash (20 RPD)
         const models = ["gemini-3.1-flash-lite-preview", "gemini-3-flash-preview", "gemini-2.5-flash-latest"];
         
-        const kb = currentKnowledge || { 
-          expertRole: language === 'de' ? "Experte für Siemens Niederspannungshauptverteilungen (NSHV)" : "Expert for Siemens low-voltage switchgear (NSHV)",
-          systems: ["SIVACON S8", "ALPHA 3200 classic", "ALPHA 3200 eco"],
-          recommendationLogic: { SIVACON_S8: { conditions: [] }, ALPHA_3200_classic: { conditions: [] } },
-          generalKnowledge: []
-        };
+        const kb = currentKnowledge || await loadSystemKnowledge();
+        setCurrentKnowledge(kb);
+
+        const order = kb.evaluationOrder && kb.evaluationOrder.length > 0
+          ? kb.evaluationOrder
+          : Object.keys(kb.systemRules || {});
+        const rulesSummary = kb.systemRules
+          ? order
+              .filter((sys) => kb.systemRules?.[sys])
+              .map((sys) => {
+                const r = kb.systemRules![sys];
+                const enabledFeatures = Object.entries(r.features || {})
+                  .filter(([, val]) => val !== false)
+                  .map(([key, val]) => (val === 'on_request' ? `${key} (auf Anfrage)` : key));
+                return `- ${sys} (${r.description || ''}):
+                    * Max. Bemessungsstrom In: ${r.maxCurrent} A
+                    * Max. Kurzzeitstrom Icw: ${r.maxIcw} kA, Stoßkurzschlussstrom Ipk: ${r.maxIpk} kA
+                    * Max. Betriebsspannung Ue: ${r.maxVoltage} V, Uimp: ${r.maxUimp} kV, Ui: ${r.maxUi} V
+                    * Max. Höhe: ${r.maxHeight} mm
+                    * Erlaubte Schutzarten: ${r.allowedIp.join(', ')}
+                    * Erlaubte innere Formen: ${r.allowedForms.join(', ')}
+                    * Sammelschienenlage: ${r.allowedBusbarPositions.join(', ')}
+                    * Aufstellart: ${r.allowedInstallationTypes.join(', ')}
+                    * Unterstützte Zusatzanforderungen: ${enabledFeatures.length > 0 ? enabledFeatures.join(', ') : 'keine'}`;
+              })
+              .join('\n                  ')
+          : 'Keine detaillierten Systemregeln geladen.';
 
         for (const modelName of models) {
           for (let i = 0; i <= maxRetries; i++) {
@@ -122,15 +144,11 @@ export const ChatBot: React.FC<ChatBotProps> = ({ data }) => {
                   
                   Du hast Zugriff auf die aktuellen Analyse-Ergebnisse des Dashboards und sollst diese nutzen, um spezifische Fragen zum extrahierten Leistungsverzeichnis zu beantworten.
                   
-                  Hier ist deine Tool-Logik zur Systemempfehlung:
-                  - SIVACON S8 ist erforderlich, wenn:
-                    ${kb.recommendationLogic.SIVACON_S8.conditions.map((c: any) => `* ${c}`).join('\n                    ')}
-                  - ALPHA 3200 classic ist erforderlich (schließt eco aus), wenn:
-                    ${kb.recommendationLogic.ALPHA_3200_classic.conditions.map((c: any) => `* ${c}`).join('\n                    ')}
-                  - ALPHA 3200 eco ist die Standardlösung für einfache Anwendungen bis 3200A, wenn keine der obigen Bedingungen für S8 oder classic zutreffen.
+                  Hier ist die aktuelle Tool-Logik zur Systemempfehlung (Prioritätsreihenfolge: ${order.join(' -> ')}; gewählt wird das erste System, das alle Anforderungen erfüllt):
+                  ${rulesSummary}
                   
                   Zusätzliches Wissen:
-                  ${kb.generalKnowledge.map((k: any) => `- ${k}`).join('\n                  ')}
+                  ${(kb.generalKnowledge || []).map((k) => `- ${k}`).join('\n                  ')}
                   
                   Spezifische System-Anweisungen und Produkt-Logik:
                   ${systemInstructions}

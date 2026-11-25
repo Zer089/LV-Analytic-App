@@ -1,17 +1,32 @@
-import React, { useState } from 'react';
-import { SwitchgearData, SystemRecommendation } from '../types';
+import React, { useState, useMemo } from 'react';
+import { SwitchgearData, SystemKnowledge } from '../types';
 import { X } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { getKnowledgeOptions } from '../utils/evaluation';
 
 interface ConfigModalProps {
   data: SwitchgearData;
+  knowledge?: SystemKnowledge | null;
   onSave: (data: SwitchgearData) => void;
   onClose: () => void;
 }
 
-export const ConfigModal: React.FC<ConfigModalProps> = ({ data, onSave, onClose }) => {
+export const ConfigModal: React.FC<ConfigModalProps> = ({ data, knowledge, onSave, onClose }) => {
   const { language, t } = useLanguage();
   const [formData, setFormData] = useState<SwitchgearData>(data);
+
+  const { ipOptions, formOptions } = useMemo(() => {
+    const opts = getKnowledgeOptions(knowledge);
+    const ips = [...opts.ipOptions];
+    if (formData.ip && formData.ip !== 'unbekannt' && formData.ip !== 'unknown' && !ips.includes(formData.ip)) {
+      ips.push(formData.ip);
+    }
+    const forms = [...opts.formOptions];
+    if (formData.form && formData.form !== 'unbekannt' && formData.form !== 'unknown' && !forms.includes(formData.form)) {
+      forms.push(formData.form);
+    }
+    return { ipOptions: ips, formOptions: forms };
+  }, [knowledge, formData.ip, formData.form]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -91,12 +106,9 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ data, onSave, onClose 
                 className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-[#009999] focus:border-[#009999] outline-none transition-all bg-white"
               >
                 <option value="unbekannt">{language === 'de' ? 'unbekannt' : 'unknown'}</option>
-                <option value="IP30">IP30</option>
-                <option value="IP31">IP31</option>
-                <option value="IP40">IP40</option>
-                <option value="IP41">IP41</option>
-                <option value="IP43">IP43</option>
-                <option value="IP54">IP54</option>
+                {ipOptions.map(ipOpt => (
+                  <option key={ipOpt} value={ipOpt}>{ipOpt}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -108,13 +120,9 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ data, onSave, onClose 
                 className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-[#009999] focus:border-[#009999] outline-none transition-all bg-white"
               >
                 <option value="unbekannt">{language === 'de' ? 'unbekannt' : 'unknown'}</option>
-                <option value="1">1</option>
-                <option value="2a">2a</option>
-                <option value="2b">2b</option>
-                <option value="3a">3a</option>
-                <option value="3b">3b</option>
-                <option value="4a">4a</option>
-                <option value="4b">4b</option>
+                {formOptions.map(formOpt => (
+                  <option key={formOpt} value={formOpt}>{formOpt}</option>
+                ))}
               </select>
             </div>
             </div>

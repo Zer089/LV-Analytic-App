@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { SwitchgearData, SystemRecommendation } from '../types';
-import { evaluateSystem } from '../utils/evaluation';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { SwitchgearData, SystemKnowledge } from '../types';
+import { evaluateSystem, loadSystemKnowledge } from '../utils/evaluation';
 import { ConfigModal } from './ConfigModal';
 import { 
-  Zap, Shield, Ruler, FileText, CheckCircle2, 
-  AlertCircle, Box, Activity, Hash, Settings, ChevronRight, ListChecks
+  Zap, Shield, FileText, CheckCircle2, 
+  AlertCircle, Box, Activity, Settings, ChevronRight, ListChecks, Loader2, RefreshCw
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -21,14 +21,30 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
   const [pdfPage, setPdfPage] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [pdfBaseUrl, setPdfBaseUrl] = useState<string>('');
-  const [knowledge, setKnowledge] = useState<any>(null);
+  const [knowledge, setKnowledge] = useState<SystemKnowledge | null>(null);
+  const [isKnowledgeLoading, setIsKnowledgeLoading] = useState(true);
+  const [knowledgeError, setKnowledgeError] = useState<string | null>(null);
+
+  const fetchKnowledge = useCallback((forceReload = false) => {
+    setIsKnowledgeLoading(true);
+    setKnowledgeError(null);
+    loadSystemKnowledge(forceReload)
+      .then((kb) => {
+        setKnowledge(kb);
+      })
+      .catch((err: any) => {
+        console.error('Failed to load knowledge:', err);
+        setKnowledge(null);
+        setKnowledgeError(err?.message || 'siemens-nshv.json konnte nicht geladen werden.');
+      })
+      .finally(() => {
+        setIsKnowledgeLoading(false);
+      });
+  }, []);
 
   useEffect(() => {
-    fetch('./siemens-nshv.json')
-      .then(res => res.json())
-      .then(data => setKnowledge(data))
-      .catch(err => console.error("Failed to load knowledge:", err));
-  }, []);
+    fetchKnowledge(false);
+  }, [fetchKnowledge]);
 
   useEffect(() => {
     if (file && file.type === 'application/pdf') {
@@ -64,15 +80,18 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
     }
   };
 
-  const evaluation = evaluateSystem(data, language);
+  const evaluation = useMemo(() => {
+    if (!knowledge) return null;
+    try {
+      return evaluateSystem(data, language, knowledge);
+    } catch (err: any) {
+      console.error('Evaluation error:', err);
+      return null;
+    }
+  }, [data, language, knowledge]);
 
   const isModified = JSON.stringify(data) !== JSON.stringify(initialData);
-
-  const systemImages: Record<SystemRecommendation, string> = {
-    'ALPHA 3200 eco': './images/A32-eco.png',
-    'ALPHA 3200 classic': './images/A32-classic.png',
-    'SIVACON S8': './images/S8.png'
-  };
+  const systemImageSrc = evaluation ? (knowledge?.systemRules?.[evaluation.system]?.image || '') : '';
 
   const fieldLabelMap: Record<string, string> = {
     'current': language === 'de' ? 'Bemessungsstrom (In)' : 'Rated current (In)',
@@ -147,6 +166,40 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
       </div>
     </motion.div>
   );
+
+  if (isKnowledgeLoading) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center py-20 gap-3 text-slate-500">
+        <Loader2 className="w-8 h-8 animate-spin text-[#009999]" />
+        <p className="text-sm font-medium">
+          {language === 'de' ? 'Lade Systemdaten aus siemens-nshv.json...' : 'Loading system data from siemens-nshv.json...'}
+        </p>
+      </div>
+    );
+  }
+
+  if (knowledgeError || !knowledge || !evaluation) {
+    return (
+      <div className="flex-1 flex items-center justify-center py-12">
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-6 max-w-lg w-full text-center space-y-4">
+          <AlertCircle className="w-10 h-10 text-red-500 mx-auto" />
+          <h3 className="text-lg font-semibold text-red-900">
+            {language === 'de' ? 'Wissensdatenbank konnte nicht geladen werden' : 'Failed to load knowledge base'}
+          </h3>
+          <p className="text-sm text-red-700">
+            {knowledgeError || (language === 'de' ? 'Ungültige oder fehlende Datei siemens-nshv.json.' : 'Invalid or missing siemens-nshv.json file.')}
+          </p>
+          <button
+            onClick={() => fetchKnowledge(true)}
+            className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl transition-colors"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            {language === 'de' ? 'Erneut laden' : 'Retry'}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col gap-8 min-h-0">
@@ -237,7 +290,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
                 <div className="w-full sm:w-2/5 flex flex-col gap-3 self-start">
                   <div className="rounded-xl overflow-hidden bg-white/5 border border-white/10 flex items-center justify-center relative">
                     <img 
-                      src={systemImages[evaluation.system]} 
+                      src={systemImageSrc} 
                       alt={evaluation.system} 
                       className="w-full h-auto object-contain"
                       referrerPolicy="no-referrer"
@@ -357,6 +410,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ initialData,
       {isModalOpen && (
         <ConfigModal 
           data={data} 
+          knowledge={knowledge}
           onSave={handleSaveConfig} 
           onClose={() => setIsModalOpen(false)} 
         />

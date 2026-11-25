@@ -65,10 +65,49 @@ export interface Project {
   fileContent?: string;
 }
 
-export type SystemRecommendation = 'ALPHA 3200 eco' | 'ALPHA 3200 classic' | 'SIVACON S8';
+export type SystemRecommendation = 'ALPHA 3200 eco' | 'ALPHA 3200 classic' | 'SIVACON S8' | (string & {});
+
+export type FeatureSupport = boolean | 'on_request';
+
+export interface SystemRule {
+  description?: string;
+  image?: string;
+  maxCurrent: number;
+  maxIcw: number;
+  maxIpk: number;
+  maxVoltage: number;
+  maxUi: number;
+  maxUimp: number;
+  maxHeight: number;
+  heightRange?: string;
+  protectionClass?: string;
+  base?: string;
+  depth?: string;
+  busbarNote?: string;
+  arcFaultClass?: string;
+  allowedIp: string[];
+  allowedForms: string[];
+  allowedBusbarPositions: string[];
+  allowedInstallationTypes: string[];
+  features: {
+    arcFault: FeatureSupport;
+    einschub: FeatureSupport;
+    mcc: FeatureSupport;
+    nj63: FeatureSupport;
+    kompensation: FeatureSupport;
+    universal: FeatureSupport;
+  };
+}
+
+export interface SystemKnowledge {
+  expertRole: string;
+  systems: string[];
+  evaluationOrder?: string[];
+  systemRules?: Record<string, SystemRule>;
+  generalKnowledge?: string[];
+}
 
 export interface EvaluationResult {
   system: SystemRecommendation;
   reasons: string[];
 }
-

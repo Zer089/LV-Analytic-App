@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { SwitchgearData } from "../types";
+import { loadSystemKnowledge, getKnowledgeOptions } from "../utils/evaluation";
 import * as pdfjsLib from 'pdfjs-dist';
 // @ts-ignore
 import workerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
@@ -59,6 +60,13 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
       extractedText = extractedText.substring(0, 100000) + "... [Text gekürzt]";
     }
     
+    const knowledge = await loadSystemKnowledge();
+    const { ipOptions, formOptions, busbarOptions, installationOptions } = getKnowledgeOptions(knowledge);
+    const ipPromptList = `${ipOptions.map((v) => `"${v}"`).join(', ')}, oder "unbekannt"`;
+    const formPromptList = `${formOptions.map((v) => `"${v}"`).join(', ')}, oder "unbekannt"`;
+    const busbarPromptList = `${busbarOptions.map((v) => `"${v}"`).join(', ')}, oder "unbekannt"`;
+    const installationPromptList = `${installationOptions.map((v) => `"${v}"`).join(', ')}, oder "unbekannt"`;
+
     const parts = [
       {
         text: `Hier ist der Inhalt eines Leistungsverzeichnisses:\n\n${extractedText}`,
@@ -69,9 +77,9 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
         - Bemessungsstrom (current) in Ampere (A)
         - Kurzschlussstrom (icw) in kA
         - Spannung (voltage) in Volt (V)
-        - Schutzart (ip): MUSS einer dieser Werte sein: "IP30", "IP31", "IP40", "IP41", "IP43", "IP54", oder "unbekannt" (wenn nicht gefunden).
-        - Innere Form (form): MUSS einer dieser Werte sein: "1", "2a", "2b", "3a", "3b", "4a", "4b", oder "unbekannt" (wenn nicht gefunden).
-        - Sammelschienenlage (busbarPosition): "Mittig", "Hinten", "Oben", oder "unbekannt"
+        - Schutzart (ip): MUSS einer dieser Werte sein: ${ipPromptList} (wenn nicht gefunden).
+        - Innere Form (form): MUSS einer dieser Werte sein: ${formPromptList} (wenn nicht gefunden).
+        - Sammelschienenlage (busbarPosition): ${busbarPromptList}
         - Bemessungsstoßspannungsfestigkeit (uimp) in kV
         - Bemessungsisolationsspannung (ui) in V
         - Bemessungsstoßkurzschlussstrom (ipk) in kA
@@ -80,7 +88,7 @@ export const extractSwitchgearData = async (file: File): Promise<SwitchgearData>
         - Sockel (base) in mm
         - Breite (width) in mm
         - Tiefe (depth) in mm
-        - Aufstellart (installationType): "Wand", "Rücken an Rücken", "Doppelfront", oder "unbekannt"
+        - Aufstellart (installationType): ${installationPromptList}
         - Features (Booleans): arcFault (Störlichtbogen), einschub (Einschubtechnik), mcc (Motor Control Center), nj63 (3NJ63 Lasttrenner), kompensation (Blindleistungskompensation), universal (Universaleinbautechnik)
         
         WICHTIG ZUM EINSCHUBTECHNIK: "einschub" bezieht sich ausschließlich auf die Niederspannungshauptverteilung als System (z.B. Abgangsmodule in Einschubtechnik). Leistungsschalter, die lediglich in Einschubtechnik ausgeführt sind, zählen NICHT als "einschub" für das Gesamtsystem.
